@@ -3,6 +3,104 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/JavaScript.js to edit this template
  */
 
+/* --- FUNZIONI COMUNI --- */
+
+function normalizeDate(d) {
+    return new Date(d).toISOString().substring(0, 10);
+}
+
+function dateRange(days) {
+    const out = [];
+    const now = new Date();
+    for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        out.push(normalizeDate(d));
+    }
+    return out;
+}
+
+function mapDataset(raw) {
+    const map = {};
+    raw.forEach(r => map[normalizeDate(r.data)] = r);
+    return map;
+}
+
+function buildSeries(mapped, field, days) {
+    const dates = dateRange(days);
+    const vals  = dates.map(d => mapped[d] ? mapped[d][field] : null);
+    return { labels: dates, data: vals };
+}
+
+/* ---- TEMPLATE GRAFICO STILE RISK ---- */
+function makeLineChart(canvasId, labels, data, color) {
+
+    return new Chart(document.getElementById(canvasId), {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                borderColor: color,
+                backgroundColor: color + "33",
+                tension: 0.35,
+                pointRadius: 4,
+                pointHoverRadius: 8,
+                borderWidth: 2,
+                spanGaps: false
+            }]
+        },
+        options: {
+
+            interaction: {
+                mode: "nearest",
+                intersect: true
+            },
+
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        title: items => "Data: " + items[0].label,
+                        label: item => item.raw == null ?
+                                "Nessun valore" :
+                                "Valore: " + item.raw
+                    }
+                }
+            },
+
+            elements: {
+                point: {
+                    hitRadius: 15
+                }
+            },
+
+            scales: {
+                x: { ticks: { maxRotation: 0 } },
+                y: { beginAtZero: false }
+            }
+        }
+    });
+}
+
+/* --- INIZIALIZZAZIONE PARAMETRI --- */
+
+function initMetricChart(canvasId, raw, field, color) {
+    const mapped = mapDataset(raw);
+    const initial = buildSeries(mapped, field, 7);
+
+    return makeLineChart(canvasId, initial.labels, initial.data, color);
+}
+
+function updateMetricChart(chart, raw, field, days) {
+    const mapped = mapDataset(raw);
+    const s = buildSeries(mapped, field, days);
+    chart.data.labels = s.labels;
+    chart.data.datasets[0].data = s.data;
+    chart.update();
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     const canvas = document.getElementById("riskChart");
     if (!canvas) return;
@@ -64,53 +162,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     });
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    // Se la pagina non contiene il dataset JSON, esci
-    const dataContainer = document.getElementById("metricsData");
-    if (!dataContainer) return;  // non siamo in patient_metrics.jsp
-
-    const rawData = JSON.parse(dataContainer.textContent);
-
-    // Estraggo le date
-    const labels = rawData.map(r => r.data.substring(0, 10));
-
-    // Estraggo serie parametri
-    const hr = rawData.map(r => r.hrCurr);
-    const spo2 = rawData.map(r => r.spo2Curr);
-    const weight = rawData.map(r => r.weightCurr);
-    const steps = rawData.map(r => r.stepsCurr);
-
-    function drawChart(canvasId, label, data) {
-        const canvas = document.getElementById(canvasId);
-        if (!canvas) return;
-
-        new Chart(canvas, {
-            type: "line",
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: label,
-                    data: data,
-                    borderWidth: 2,
-                    tension: 0.3,
-                    pointRadius: 3
-                }]
-            },
-            options: {
-                plugins: { legend: { display: true } },
-                scales: { y: { beginAtZero: false } }
-            }
-        });
-    }
-
-    // Disegno i grafici
-    drawChart("hrChart", "HR (bpm)", hr);
-    drawChart("spo2Chart", "SpO₂ (%)", spo2);
-    drawChart("weightChart", "Peso (kg)", weight);
-    drawChart("stepsChart", "Passi", steps);
 });
 
 
