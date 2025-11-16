@@ -6,6 +6,8 @@ package dao;
 
 import model.Parametri;
 import java.sql.*;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ParametriDAO {
 
@@ -100,5 +102,29 @@ public class ParametriDAO {
         p.setStepsBs(rs.getDouble("steps_bs"));
 
         return p;
+    }
+    
+    public static List<Parametri> getLastDays(long idPaz, int days) throws SQLException {
+
+    String sql =
+        "SELECT * FROM parametri " +
+        "WHERE id_paz = ? " +
+        "AND CAST(data AS DATE) >= CAST(NOW() AS DATE) - INTERVAL '" + (days-1) + " days' " +
+        "ORDER BY data ASC";
+
+    List<Parametri> list = new ArrayList<>();
+
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setLong(1, idPaz);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                list.add(map(rs));
+            }
+        }
+    }
+    return list;
     }
 }

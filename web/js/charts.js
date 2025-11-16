@@ -32,3 +32,51 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Se la pagina non contiene il dataset JSON, esci
+    const dataContainer = document.getElementById("metricsData");
+    if (!dataContainer) return;  // non siamo in patient_metrics.jsp
+
+    const rawData = JSON.parse(dataContainer.textContent);
+
+    // Estraggo le date
+    const labels = rawData.map(r => r.data.substring(0, 10));
+
+    // Estraggo serie parametri
+    const hr = rawData.map(r => r.hrCurr);
+    const spo2 = rawData.map(r => r.spo2Curr);
+    const weight = rawData.map(r => r.weightCurr);
+    const steps = rawData.map(r => r.stepsCurr);
+
+    function drawChart(canvasId, label, data) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        new Chart(canvas, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: false } }
+            }
+        });
+    }
+
+    // Disegno i grafici
+    drawChart("hrChart", "HR (bpm)", hr);
+    drawChart("spo2Chart", "SpO₂ (%)", spo2);
+    drawChart("weightChart", "Peso (kg)", weight);
+    drawChart("stepsChart", "Passi", steps);
+});
+
+

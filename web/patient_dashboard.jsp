@@ -46,9 +46,11 @@
 
 <div class="layout">
   <div class="sidebar">
-    <a href="dashboard" class="active">Dashboard</a>
-    <a href="../questionnaire.jsp">Questionario</a>
+    <a href="dashboard">Dashboard</a>
+    <a href="questionnaire">Questionario</a>
+    <a href="metrics">Storico Parametri</a>
   </div>
+
 
   <div class="main">
     <h2>Dashboard Paziente</h2>
