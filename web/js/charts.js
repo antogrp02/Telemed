@@ -3,33 +3,67 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/JavaScript.js to edit this template
  */
 
-document.addEventListener("DOMContentLoaded", function() {
-  const canvas = document.getElementById("riskChart");
-  if (!canvas) return;
+document.addEventListener("DOMContentLoaded", function () {
+    const canvas = document.getElementById("riskChart");
+    if (!canvas) return;
 
-  const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
-  const labels = ["-6g","-5g","-4g","-3g","-2g","-1g","oggi"];
-  const data = [0.18,0.21,0.24,0.30,0.35,0.40,0.45];
+    // Lista rischi dal backend
+    const dataList = riskData || [];
 
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "Rischio",
-        data: data,
-        borderWidth: 2,
-        tension: 0.3
-      }]
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { min: 0, max:1 }
-      }
+    const today = new Date();
+
+    const labels = [];
+    const values = [];
+
+    // Funzione per ricavare YYYY-MM-DD da qualsiasi formato
+    function normalizeDate(str) {
+        try {
+            let d = new Date(str);
+            if (!isNaN(d)) {
+                return d.toISOString().substring(0, 10);
+            }
+        } catch (e) {
+            console.log("Bad date:", str);
+        }
+        return null;
     }
-  });
+
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+
+        const strDay = d.toISOString().substring(0, 10);
+
+        labels.push(strDay);
+
+        // Cerca corrispondenza ignorando formato
+        const entry = dataList.find(r => normalizeDate(r.data) === strDay);
+
+        values.push(entry ? entry.riskScore : null);
+    }
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Rischio HF",
+                data: values,
+                borderWidth: 2,
+                borderColor: "#e11d48",
+                tension: 0.3,
+                pointRadius: 3,
+                spanGaps: false
+            }]
+        },
+        options: {
+            scales: {
+                y: { min: 0, max: 1 }
+            }
+        }
+    });
 });
 
 document.addEventListener("DOMContentLoaded", function () {

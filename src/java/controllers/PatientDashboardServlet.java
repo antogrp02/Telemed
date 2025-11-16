@@ -12,7 +12,9 @@ import model.Risk;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet("/patient/dashboard")
 public class PatientDashboardServlet extends HttpServlet {
@@ -23,13 +25,11 @@ public class PatientDashboardServlet extends HttpServlet {
 
         HttpSession s = req.getSession(false);
 
-        // 1) Controllo sessione e ruolo (0 = paziente)
         if (s == null || s.getAttribute("role") == null || (int) s.getAttribute("role") != 0) {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
 
-        // 2) Recupero id paziente dalla sessione (impostato da LoginServlet)
         Long idPaz = (Long) s.getAttribute("id_paziente");
 
         if (idPaz == null) {
@@ -39,16 +39,16 @@ public class PatientDashboardServlet extends HttpServlet {
         }
 
         try {
-            // 3) Recupero ultimo set di parametri
             Parametri lastParams = ParametriDAO.getLastByPatient(idPaz);
-
-            // 4) Recupero ultimo risk score
             Risk lastRisk = RiskDAO.getLastByPatient(idPaz);
+
+            // 🔥 Storico rischio ultimi 7 giorni
+            List<Risk> storicoRisk = RiskDAO.getLast7Days(idPaz);
+            req.setAttribute("storicoRisk", storicoRisk);
 
             req.setAttribute("lastParams", lastParams);
             req.setAttribute("lastRisk", lastRisk);
 
-            // 5) Mostra dashboard
             req.getRequestDispatcher("/patient_dashboard.jsp").forward(req, resp);
 
         } catch (Exception e) {
@@ -56,4 +56,3 @@ public class PatientDashboardServlet extends HttpServlet {
         }
     }
 }
-

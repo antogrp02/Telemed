@@ -46,7 +46,7 @@
 
 <div class="layout">
   <div class="sidebar">
-    <a href="dashboard">Dashboard</a>
+    <a class="active" href="dashboard">Dashboard</a>
     <a href="questionnaire">Questionario</a>
     <a href="metrics">Storico Parametri</a>
   </div>
@@ -120,10 +120,11 @@
   </div>
 </div>
 
-<script src="../js/charts.js"></script>
+<!-- Passaggio del JSON alla pagina -->
 <script>
-  // qui potresti popolare il grafico con dati reali (via JSON dal backend)
+    const riskData = <%= new com.google.gson.Gson().toJson(request.getAttribute("storicoRisk")) %>;
 </script>
+<script src="../js/charts.js"></script>
 
 <!-- Popup conferma questionario -->
 <div id="qModal" class="modal-overlay" style="display: <%= showPopup ? "flex" : "none" %>;">

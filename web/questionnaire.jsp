@@ -51,7 +51,7 @@
 
     <div class="sidebar">
         <a href="dashboard">Dashboard</a>
-        <a href="questionnaire">Questionario</a>
+        <a class="active" href="questionnaire">Questionario</a>
         <a href="metrics">Storico Parametri</a>
     </div>
 
