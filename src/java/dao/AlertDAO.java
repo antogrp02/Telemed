@@ -11,47 +11,71 @@ import java.util.List;
 
 public class AlertDAO {
 
-    public static void insert(Alert a) throws SQLException {
-        String sql =
-            "INSERT INTO alert (id_paz, data, risk_score, soglia, stato) VALUES (?,?,?,?,?)";
+    private static Alert map(ResultSet rs) throws Exception {
+        Alert a = new Alert();
+        a.setIdAlert(rs.getLong("id_alert"));
+        a.setIdPaz(rs.getLong("id_paz"));
+        a.setRiskData(rs.getTimestamp("risk_data"));
+        a.setIdMedico(rs.getLong("id_medico"));
+        a.setMessaggio(rs.getString("messaggio"));
+        a.setVisto(rs.getBoolean("visto"));
+        a.setArchiviato(rs.getBoolean("archiviato"));
+        return a;
+    }
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    public static List<Alert> getAlertsByPaziente(long idPaz) {
+        List<Alert> list = new ArrayList<>();
+
+        String sql = "SELECT * FROM alert WHERE id_paz = ? AND archiviato = false ORDER BY risk_data DESC";
+
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, idPaz);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                list.add(map(rs));
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return list;
+    }
+
+    public static void insert(Alert a) throws Exception {
+        String sql = "INSERT INTO alert (id_paz, risk_data, id_medico, messaggio) VALUES (?,?,?,?)";
+
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setLong(1, a.getIdPaz());
-            ps.setTimestamp(2, a.getData());
-            ps.setFloat(3, a.getRiskScore());
-            ps.setFloat(4, a.getSoglia());
-            ps.setString(5, a.getStato());
+            ps.setTimestamp(2, a.getRiskData());
+            ps.setLong(3, a.getIdMedico());
+            ps.setString(4, a.getMessaggio());
+
             ps.executeUpdate();
         }
     }
 
-    public static List<Alert> listActive() throws SQLException {
+    public static List<Alert> getAlertsByMedico(long idMedico) {
         List<Alert> list = new ArrayList<>();
-        String sql =
-            "SELECT a.id_alert, a.id_paz, a.data, a.risk_score, a.stato, p.nome, p.cognome " +
-            "FROM alert a " +
-            "JOIN paziente p ON a.id_paz = p.id_paz " +
-            "WHERE a.stato = 'attivo' " +
-            "ORDER BY a.data DESC";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        String sql = "SELECT * FROM alert WHERE id_medico = ? AND archiviato = false ORDER BY risk_data DESC";
+
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, idMedico);
+            ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                Alert a = new Alert();
-                a.setIdAlert(rs.getLong("id_alert"));
-                a.setIdPaz(rs.getLong("id_paz"));
-                a.setData(rs.getTimestamp("data"));
-                a.setRiskScore(rs.getFloat("risk_score"));
-                a.setStato(rs.getString("stato"));
-                a.setNomePaz(rs.getString("nome"));
-                a.setCognomePaz(rs.getString("cognome"));
-                list.add(a);
+                list.add(map(rs));
             }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
+
         return list;
     }
+
 }

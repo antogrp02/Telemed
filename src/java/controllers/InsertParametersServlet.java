@@ -7,15 +7,20 @@ package controllers;
 import dao.ParametriDAO;
 import dao.RiskDAO;
 import dao.AlertDAO;
+import dao.PazienteDAO;
+
 import model.Parametri;
 import model.Risk;
 import model.Alert;
+import model.Paziente;
+
 import utils.PlumberClient;
 import utils.RiskEvaluator;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -25,14 +30,19 @@ public class InsertParametersServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
 
         try {
             long idPaz = Long.parseLong(req.getParameter("id_paz"));
 
+            Timestamp now = Timestamp.from(Instant.now());
+
+            // ------------------------
+            // 1) Costruzione Parametri
+            // ------------------------
             Parametri p = new Parametri();
             p.setIdPaz(idPaz);
-            p.setData(Timestamp.from(Instant.now()));
+            p.setData(now);
 
             p.setHrCurr(Double.parseDouble(req.getParameter("hr_curr")));
             p.setRhrCurr(Double.parseDouble(req.getParameter("rhr_curr")));
@@ -61,39 +71,60 @@ public class InsertParametersServlet extends HttpServlet {
             p.setWeightBs(Double.parseDouble(req.getParameter("weight_bs")));
             p.setStepsBs(Double.parseDouble(req.getParameter("steps_bs")));
 
-            // 1) salva parametri
+            // ------------------------
+            // 2) Salvataggio parametri
+            // ------------------------
             ParametriDAO.insert(p);
 
-            // 2) calcola risk_score (ora dummy, in futuro via Plumber)
+            // ------------------------
+            // 3) Calcolo rischio ML
+            // ------------------------
             float riskScore = PlumberClient.getRiskScore(p);
 
-            // 3) salva in risk
+            // ------------------------
+            // 4) Salvataggio rischio
+            // ------------------------
             Risk r = new Risk();
             r.setIdPaz(idPaz);
-            r.setData(p.getData());
+            r.setData(now);
             r.setRiskScore(riskScore);
             RiskDAO.insert(r);
 
-            // 4) se > soglia, crea alert
+            // ------------------------
+            // 5) Creazione ALERT se necessario
+            // ------------------------
             if (RiskEvaluator.isAlert(riskScore)) {
-                Alert a = new Alert();
-                a.setIdPaz(idPaz);
-                a.setData(p.getData());
-                a.setRiskScore(riskScore);
-                a.setSoglia(RiskEvaluator.SOGLIA_ALERT);
-                a.setStato("attivo");
-                AlertDAO.insert(a);
+
+                // recupero il medico del paziente
+                Paziente paz = PazienteDAO.getByIdPaziente(idPaz);
+                if (paz != null) {
+
+                    Alert a = new Alert();
+                    a.setIdPaz(idPaz);
+                    a.setRiskData(r.getData());  // TIMESTAMP della predizione ML
+                    a.setIdMedico(paz.getIdMedico());
+                    a.setMessaggio("Rischio elevato: " + Math.round(riskScore * 100) + "%");
+
+                    AlertDAO.insert(a);
+                }
             }
 
+            // ------------------------
+            // 6) Risposta JSON
+            // ------------------------
             resp.setStatus(HttpServletResponse.SC_OK);
             resp.setContentType("application/json");
-            resp.getWriter().write("{\"status\":\"ok\",\"risk_score\":" + riskScore + "}");
+            resp.getWriter().write(
+                    "{\"status\":\"ok\",\"risk_score\":" + riskScore + "}"
+            );
 
         } catch (Exception e) {
             e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.setContentType("application/json");
-            resp.getWriter().write("{\"status\":\"error\",\"msg\":\"" + e.getMessage() + "\"}");
+            resp.getWriter().write(
+                    "{\"status\":\"error\",\"msg\":\"" + e.getMessage() + "\"}"
+            );
         }
     }
 }

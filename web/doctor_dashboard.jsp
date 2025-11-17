@@ -10,6 +10,7 @@
 <%
     List<Paziente> pazienti = (List<Paziente>) request.getAttribute("pazienti");
     Map<Long, Risk> lastRiskByPaz = (Map<Long, Risk>) request.getAttribute("lastRiskByPaz");
+    String ctx = request.getContextPath();
 %>
 
 <!DOCTYPE html>
@@ -17,7 +18,7 @@
 <head>
     <title>Heart Monitor - Medico</title>
 
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="<%= ctx %>/css/style.css">
 
     <style>
         /* --- DROPDOWN RICERCA --- */
@@ -34,7 +35,6 @@
             max-height: 240px;
             overflow-y: auto;
         }
-
         .result-item {
             padding: 10px 12px;
             cursor: pointer;
@@ -42,15 +42,12 @@
             color: #1e293b;
             border-bottom: 1px solid #f1f5f9;
         }
-
         .result-item:hover {
             background: #f8fafc;
         }
-
         .result-item:last-child {
             border-bottom: none;
         }
-
         .no-results {
             padding: 10px;
             text-align: center;
@@ -58,7 +55,7 @@
             font-size: 14px;
         }
 
-        /* --- PULSANTI --- */
+        /* --- PULSANTE APRI SCHEDA --- */
         .btn-primary-sm {
             padding: 6px 12px;
             border-radius: 999px;
@@ -73,7 +70,7 @@
             filter: brightness(1.05);
         }
 
-        /* --- BADGE --- */
+        /* --- BADGE ALERT --- */
         .badge-alert {
             display: inline-flex;
             align-items: center;
@@ -97,19 +94,20 @@
 
 <body>
 
+<!-- TOP BAR -->
 <div class="topbar">
     <div class="logo">Heart Monitor</div>
     <div class="subtitle">Dashboard Medico</div>
     <div class="spacer"></div>
-    <a href="../logout" class="toplink">Logout</a>
+    <a href="<%= ctx %>/logout" class="toplink">Logout</a>
 </div>
 
 <div class="layout">
 
     <!-- SIDEBAR -->
     <div class="sidebar">
-        <a href="dashboard" class="active">Pazienti</a>
-        <a href="alerts">Alert</a>
+        <a href="<%= ctx %>/doctor/dashboard" class="active">Pazienti</a>
+        <a href="<%= ctx %>/doctor/alerts">Alert</a>
     </div>
 
     <!-- CONTENUTO PRINCIPALE -->
@@ -118,17 +116,18 @@
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
             <h2>Pazienti in carico</h2>
 
-            <!-- Barra di ricerca -->
+            <!-- BARRA DI RICERCA -->
             <div style="position:relative; width:260px;">
                 <input id="searchBox"
                        type="text"
                        placeholder="Cerca per nome, cognome o CF..."
                        style="padding:8px 12px; width:100%; border-radius:8px; border:1px solid #cbd5f5;">
+
                 <div id="searchResults"></div>
             </div>
         </div>
 
-        <!-- TABELLONE PAZIENTI -->
+        <!-- TABELLA PAZIENTI -->
         <table class="table">
             <thead>
             <tr>
@@ -151,7 +150,6 @@
                                 Nessun paziente associato.
                             </td>
                         </tr>
-
             <%
                     }
 
@@ -175,14 +173,14 @@
 
                 <td>
                     <% if (r != null && RiskEvaluator.isAlert(score)) { %>
-                    <span class="badge-alert">Attivo</span>
+                        <span class="badge-alert">Attivo</span>
                     <% } else { %>
-                    <span class="badge-none">Nessuno</span>
+                        <span class="badge-none">Nessuno</span>
                     <% } %>
                 </td>
 
                 <td style="text-align:right;">
-                    <form action="patient" method="get" style="display:inline;">
+                    <form action="<%= ctx %>/doctor/patient" method="get" style="display:inline;">
                         <input type="hidden" name="id" value="<%= p.getIdPaz() %>">
                         <button type="submit" class="btn-primary-sm">Apri scheda</button>
                     </form>
@@ -200,8 +198,9 @@
 <script>
     const box = document.getElementById("searchBox");
     const resultsDiv = document.getElementById("searchResults");
+    const ctx = "<%= ctx %>";
 
-    // Evidenzia la parte cercata
+    // Evidenzia stringa cercata
     function highlight(text, query) {
         const regex = new RegExp("(" + query + ")", "gi");
         return text.replace(regex, "<strong>$1</strong>");
@@ -215,9 +214,7 @@
             return;
         }
 
-        const url = "${pageContext.request.contextPath}/doctor/search?q=" + encodeURIComponent(q);
-
-        fetch(url)
+        fetch(ctx + "/doctor/search?q=" + encodeURIComponent(q))
             .then(r => r.json())
             .then(data => {
 
@@ -233,7 +230,7 @@
                     const cf = highlight(p.cf, q);
 
                     return (
-                        '<div class="result-item" onclick="location.href=\'patient?id=' + p.idPaz + '\'">' +
+                        '<div class="result-item" onclick="location.href=\'' + ctx + '/doctor/patient?id=' + p.idPaz + '\'">' +
                             nome + ' ' + cognome +
                             ' <span style="color:#6b7280; font-size:12px;">(' + cf + ')</span>' +
                         '</div>'
@@ -245,7 +242,6 @@
             .catch(err => console.error("Errore fetch:", err));
     });
 
-    // Chiude dropdown cliccando fuori
     document.addEventListener("click", (e) => {
         if (!box.contains(e.target)) {
             resultsDiv.style.display = "none";
@@ -255,3 +251,4 @@
 
 </body>
 </html>
+

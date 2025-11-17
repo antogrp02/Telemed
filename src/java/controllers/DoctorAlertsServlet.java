@@ -18,7 +18,7 @@ public class DoctorAlertsServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
 
         HttpSession s = req.getSession(false);
         if (s == null || s.getAttribute("role") == null || (int) s.getAttribute("role") != 1) {
@@ -27,7 +27,9 @@ public class DoctorAlertsServlet extends HttpServlet {
         }
 
         try {
-            List<Alert> alerts = AlertDAO.listActive();
+            long idMedico = (long) s.getAttribute("id_medico");
+            List<Alert> alerts = AlertDAO.getAlertsByMedico(idMedico);
+
             req.setAttribute("alerts", alerts);
             req.getRequestDispatcher("/doctor_alerts.jsp").forward(req, resp);
         } catch (Exception e) {

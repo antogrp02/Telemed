@@ -7,15 +7,16 @@ package model;
 import java.sql.Timestamp;
 
 public class Alert {
+
     private long idAlert;
     private long idPaz;
-    private Timestamp data;
-    private float riskScore;
-    private float soglia;
-    private String stato;
+    private Timestamp riskData;
+    private long idMedico;
 
-    private String nomePaz;
-    private String cognomePaz;
+    private String messaggio;
+
+    private boolean visto;
+    private boolean archiviato;
 
     public long getIdAlert() { return idAlert; }
     public void setIdAlert(long idAlert) { this.idAlert = idAlert; }
@@ -23,21 +24,19 @@ public class Alert {
     public long getIdPaz() { return idPaz; }
     public void setIdPaz(long idPaz) { this.idPaz = idPaz; }
 
-    public Timestamp getData() { return data; }
-    public void setData(Timestamp data) { this.data = data; }
+    public Timestamp getRiskData() { return riskData; }
+    public void setRiskData(Timestamp riskData) { this.riskData = riskData; }
 
-    public float getRiskScore() { return riskScore; }
-    public void setRiskScore(float riskScore) { this.riskScore = riskScore; }
+    public long getIdMedico() { return idMedico; }
+    public void setIdMedico(long idMedico) { this.idMedico = idMedico; }
 
-    public float getSoglia() { return soglia; }
-    public void setSoglia(float soglia) { this.soglia = soglia; }
+    public String getMessaggio() { return messaggio; }
+    public void setMessaggio(String messaggio) { this.messaggio = messaggio; }
 
-    public String getStato() { return stato; }
-    public void setStato(String stato) { this.stato = stato; }
+    public boolean isVisto() { return visto; }
+    public void setVisto(boolean visto) { this.visto = visto; }
 
-    public String getNomePaz() { return nomePaz; }
-    public void setNomePaz(String nomePaz) { this.nomePaz = nomePaz; }
-
-    public String getCognomePaz() { return cognomePaz; }
-    public void setCognomePaz(String cognomePaz) { this.cognomePaz = cognomePaz; }
+    public boolean isArchiviato() { return archiviato; }
+    public void setArchiviato(boolean archiviato) { this.archiviato = archiviato; }
 }
+
