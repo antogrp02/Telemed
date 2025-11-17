@@ -4,23 +4,23 @@
  */
 package model;
 
-import java.time.LocalDate;
+import java.sql.Date;
 
 public class Paziente {
 
     private long idPaz;
-    private long idUtente;   // collegamento tabella utente
-    private long idMedico;   // medico responsabile
+    private long idUtente;
+    private long idMedico;
 
     private String nome;
     private String cognome;
-    private LocalDate dataN;
+    private Date dataN;   // <<< SISTEMATO: java.sql.Date !!!
     private String sesso;
     private String cf;
     private String mail;
     private long nTel;
 
-    // --- GETTER & SETTER ---
+    // GETTER & SETTER
 
     public long getIdPaz() {
         return idPaz;
@@ -62,11 +62,11 @@ public class Paziente {
         this.cognome = cognome;
     }
 
-    public LocalDate getDataN() {
+    public Date getDataN() {
         return dataN;
     }
 
-    public void setDataN(LocalDate dataN) {
+    public void setDataN(Date dataN) {
         this.dataN = dataN;
     }
 
