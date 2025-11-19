@@ -15,240 +15,247 @@
 
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Heart Monitor - Medico</title>
+    <head>
+        <title>Heart Monitor - Medico</title>
 
-    <link rel="stylesheet" href="<%= ctx %>/css/style.css">
+        <link rel="stylesheet" href="<%= ctx%>/css/style.css">
 
-    <style>
-        /* --- DROPDOWN RICERCA --- */
-        #searchResults {
-            position: absolute;
-            top: 40px;
-            width: 100%;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            display: none;
-            z-index: 200;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            max-height: 240px;
-            overflow-y: auto;
-        }
-        .result-item {
-            padding: 10px 12px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #1e293b;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .result-item:hover {
-            background: #f8fafc;
-        }
-        .result-item:last-child {
-            border-bottom: none;
-        }
-        .no-results {
-            padding: 10px;
-            text-align: center;
-            color: #64748b;
-            font-size: 14px;
-        }
+        <style>
+            /* --- DROPDOWN RICERCA --- */
+            #searchResults {
+                position: absolute;
+                top: 40px;
+                width: 100%;
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                display: none;
+                z-index: 200;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                max-height: 240px;
+                overflow-y: auto;
+            }
+            .result-item {
+                padding: 10px 12px;
+                cursor: pointer;
+                font-size: 14px;
+                color: #1e293b;
+                border-bottom: 1px solid #f1f5f9;
+            }
+            .result-item:hover {
+                background: #f8fafc;
+            }
+            .result-item:last-child {
+                border-bottom: none;
+            }
+            .no-results {
+                padding: 10px;
+                text-align: center;
+                color: #64748b;
+                font-size: 14px;
+            }
 
-        /* --- PULSANTE APRI SCHEDA --- */
-        .btn-primary-sm {
-            padding: 6px 12px;
-            border-radius: 999px;
-            border: none;
-            cursor: pointer;
-            background: linear-gradient(to right, #0ea5e9, #6366f1);
-            color: white;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        .btn-primary-sm:hover {
-            filter: brightness(1.05);
-        }
+            /* --- PULSANTE APRI SCHEDA --- */
+            .btn-primary-sm {
+                padding: 6px 12px;
+                border-radius: 999px;
+                border: none;
+                cursor: pointer;
+                background: linear-gradient(to right, #0ea5e9, #6366f1);
+                color: white;
+                font-size: 13px;
+                font-weight: 500;
+            }
+            .btn-primary-sm:hover {
+                filter: brightness(1.05);
+            }
 
-        /* --- BADGE ALERT --- */
-        .badge-alert {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 8px;
-            border-radius: 999px;
-            font-size: 12px;
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-        .badge-none {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 8px;
-            border-radius: 999px;
-            font-size: 12px;
-            background: #e5e7eb;
-            color: #475569;
-        }
-    </style>
-</head>
+            /* --- BADGE ALERT --- */
+            .badge-alert {
+                display: inline-flex;
+                align-items: center;
+                padding: 4px 8px;
+                border-radius: 999px;
+                font-size: 12px;
+                background: #fee2e2;
+                color: #b91c1c;
+            }
+            .badge-none {
+                display: inline-flex;
+                align-items: center;
+                padding: 4px 8px;
+                border-radius: 999px;
+                font-size: 12px;
+                background: #e5e7eb;
+                color: #475569;
+            }
+        </style>
+    </head>
 
-<body>
+    <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-    <div class="logo">Heart Monitor</div>
-    <div class="subtitle">Dashboard Medico</div>
-    <div class="spacer"></div>
-    <a href="<%= ctx %>/logout" class="toplink">Logout</a>
-</div>
-
-<div class="layout">
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <a href="<%= ctx %>/doctor/dashboard" class="active">Pazienti</a>
-        <a href="<%= ctx %>/doctor/alerts">Alert</a>
-    </div>
-
-    <!-- CONTENUTO PRINCIPALE -->
-    <div class="main">
-
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
-            <h2>Pazienti in carico</h2>
-
-            <!-- BARRA DI RICERCA -->
-            <div style="position:relative; width:260px;">
-                <input id="searchBox"
-                       type="text"
-                       placeholder="Cerca per nome, cognome o CF..."
-                       style="padding:8px 12px; width:100%; border-radius:8px; border:1px solid #cbd5f5;">
-
-                <div id="searchResults"></div>
-            </div>
+        <!-- TOP BAR -->
+        <div class="topbar">
+            <div class="logo">Heart Monitor</div>
+            <div class="subtitle">Dashboard Medico</div>
+            <div class="spacer"></div>
+            <a href="<%= ctx%>/logout" class="toplink">Logout</a>
         </div>
 
-        <!-- TABELLA PAZIENTI -->
-        <table class="table">
-            <thead>
-            <tr>
-                <th>Paziente</th>
-                <th>Ultima predizione</th>
-                <th>Rischio</th>
-                <th>Alert</th>
-                <th style="text-align:right;">Azioni</th>
-            </tr>
-            </thead>
-            <tbody>
+        <div class="layout">
 
-            <%
-                if (pazienti != null && lastRiskByPaz != null) {
+            <!-- SIDEBAR -->
+            <div class="sidebar">
+                <a href="<%= ctx%>/doctor/dashboard" class="active">Pazienti</a>
+                <a href="<%= ctx%>/doctor/alerts">Alert</a>
+            </div>
 
-                    if (pazienti.isEmpty()) {
-            %>
+            <!-- CONTENUTO PRINCIPALE -->
+            <div class="main">
+
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+                    <h2>Pazienti in carico</h2>
+
+                    <!-- BARRA DI RICERCA -->
+                    <div style="position:relative; width:260px;">
+                        <input id="searchBox"
+                               type="text"
+                               placeholder="Cerca per nome, cognome o CF..."
+                               style="padding:8px 12px; width:100%; border-radius:8px; border:1px solid #cbd5f5;">
+
+                        <div id="searchResults"></div>
+                    </div>
+                </div>
+
+                <!-- TABELLA PAZIENTI -->
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Paziente</th>
+                            <th>Ultima predizione</th>
+                            <th>Rischio</th>
+                            <th>Alert</th>
+                            <th style="text-align:right;">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        <%
+                            if (pazienti != null && lastRiskByPaz != null) {
+
+                                if (pazienti.isEmpty()) {
+                        %>
                         <tr>
                             <td colspan="5" style="text-align:center; padding:20px; color:#64748b;">
                                 Nessun paziente associato.
                             </td>
                         </tr>
-            <%
-                    }
+                        <%
+                            }
 
-                    for (Paziente p : pazienti) {
-                        Risk r = lastRiskByPaz.get(p.getIdPaz());
-                        float score = (r != null ? r.getRiskScore() : 0f);
+                            for (Paziente p : pazienti) {
+                                Risk r = lastRiskByPaz.get(p.getIdPaz());
+                                float score = (r != null ? r.getRiskScore() : 0f);
 
-                        String level = RiskEvaluator.getLevel(score);
-                        String css = RiskEvaluator.getCssClass(score);
-            %>
+                                String level = RiskEvaluator.getLevel(score);
+                                String css = RiskEvaluator.getCssClass(score);
+                        %>
 
-            <tr>
-                <td><%= p.getNome() %> <%= p.getCognome() %></td>
-                <td><%= (r != null ? r.getData() : "N/D") %></td>
+                        <tr>
+                            <td><%= p.getNome()%> <%= p.getCognome()%></td>
+                            <td><%= (r != null ? r.getData() : "N/D")%></td>
 
-                <td>
-                    <span class="risk-badge <%= css %>">
-                        <%= String.format("%.0f%%", score * 100) %> (<%= level %>)
-                    </span>
-                </td>
+                            <td>
+                                <span class="risk-badge <%= css%>">
+                                    <%= String.format("%.0f%%", score * 100)%> (<%= level%>)
+                                </span>
+                            </td>
 
-                <td>
-                    <% if (r != null && RiskEvaluator.isAlert(score)) { %>
-                        <span class="badge-alert">Attivo</span>
-                    <% } else { %>
-                        <span class="badge-none">Nessuno</span>
-                    <% } %>
-                </td>
+                            <td>
+                                <%
+                                    Map<Long, Boolean> hasAlert = (Map<Long, Boolean>) request.getAttribute("hasAlert");
+                                    boolean alertActive = hasAlert != null && hasAlert.getOrDefault(p.getIdPaz(), false);
+                                %>
 
-                <td style="text-align:right;">
-                    <form action="<%= ctx %>/doctor/patient" method="get" style="display:inline;">
-                        <input type="hidden" name="id" value="<%= p.getIdPaz() %>">
-                        <button type="submit" class="btn-primary-sm">Apri scheda</button>
-                    </form>
-                </td>
-            </tr>
+                                <% if (alertActive) { %>
+                                <span class="badge-alert">Attivo</span>
+                                <% } else { %>
+                                <span class="badge-none">Nessuno</span>
+                                <% }%>
 
-            <% } } %>
+                            </td>
 
-            </tbody>
-        </table>
-    </div>
-</div>
+                            <td style="text-align:right;">
+                                <form action="<%= ctx%>/doctor/patient" method="get" style="display:inline;">
+                                    <input type="hidden" name="id" value="<%= p.getIdPaz()%>">
+                                    <button type="submit" class="btn-primary-sm">Apri scheda</button>
+                                </form>
+                            </td>
+                        </tr>
 
-<!-- SCRIPT RICERCA LIVE -->
-<script>
-    const box = document.getElementById("searchBox");
-    const resultsDiv = document.getElementById("searchResults");
-    const ctx = "<%= ctx %>";
+                        <% }
+                }%>
 
-    // Evidenzia stringa cercata
-    function highlight(text, query) {
-        const regex = new RegExp("(" + query + ")", "gi");
-        return text.replace(regex, "<strong>$1</strong>");
-    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-    box.addEventListener("input", () => {
-        const q = box.value.trim();
+        <!-- SCRIPT RICERCA LIVE -->
+        <script>
+            const box = document.getElementById("searchBox");
+            const resultsDiv = document.getElementById("searchResults");
+            const ctx = "<%= ctx%>";
 
-        if (q.length === 0) {
-            resultsDiv.style.display = "none";
-            return;
-        }
+            // Evidenzia stringa cercata
+            function highlight(text, query) {
+                const regex = new RegExp("(" + query + ")", "gi");
+                return text.replace(regex, "<strong>$1</strong>");
+            }
 
-        fetch(ctx + "/doctor/search?q=" + encodeURIComponent(q))
-            .then(r => r.json())
-            .then(data => {
+            box.addEventListener("input", () => {
+                const q = box.value.trim();
 
-                if (!data || data.length === 0) {
-                    resultsDiv.innerHTML = "<div class='no-results'>Nessun risultato</div>";
-                    resultsDiv.style.display = "block";
+                if (q.length === 0) {
+                    resultsDiv.style.display = "none";
                     return;
                 }
 
-                resultsDiv.innerHTML = data.map(p => {
-                    const nome = highlight(p.nome, q);
-                    const cognome = highlight(p.cognome, q);
-                    const cf = highlight(p.cf, q);
+                fetch(ctx + "/doctor/search?q=" + encodeURIComponent(q))
+                        .then(r => r.json())
+                        .then(data => {
 
-                    return (
-                        '<div class="result-item" onclick="location.href=\'' + ctx + '/doctor/patient?id=' + p.idPaz + '\'">' +
-                            nome + ' ' + cognome +
-                            ' <span style="color:#6b7280; font-size:12px;">(' + cf + ')</span>' +
-                        '</div>'
-                    );
-                }).join("");
+                            if (!data || data.length === 0) {
+                                resultsDiv.innerHTML = "<div class='no-results'>Nessun risultato</div>";
+                                resultsDiv.style.display = "block";
+                                return;
+                            }
 
-                resultsDiv.style.display = "block";
-            })
-            .catch(err => console.error("Errore fetch:", err));
-    });
+                            resultsDiv.innerHTML = data.map(p => {
+                                const nome = highlight(p.nome, q);
+                                const cognome = highlight(p.cognome, q);
+                                const cf = highlight(p.cf, q);
 
-    document.addEventListener("click", (e) => {
-        if (!box.contains(e.target)) {
-            resultsDiv.style.display = "none";
-        }
-    });
-</script>
+                                return (
+                                        '<div class="result-item" onclick="location.href=\'' + ctx + '/doctor/patient?id=' + p.idPaz + '\'">' +
+                                        nome + ' ' + cognome +
+                                        ' <span style="color:#6b7280; font-size:12px;">(' + cf + ')</span>' +
+                                        '</div>'
+                                        );
+                            }).join("");
 
-</body>
+                            resultsDiv.style.display = "block";
+                        })
+                        .catch(err => console.error("Errore fetch:", err));
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!box.contains(e.target)) {
+                    resultsDiv.style.display = "none";
+                }
+            });
+        </script>
+
+    </body>
 </html>
 

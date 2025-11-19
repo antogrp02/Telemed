@@ -78,4 +78,45 @@ public class AlertDAO {
         return list;
     }
 
+    // marca come "visto" un alert di questo medico
+    public static void markSeen(long idAlert, long idMedico) throws Exception {
+        String sql = "UPDATE alert SET visto = TRUE WHERE id_alert = ? AND id_medico = ?";
+
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, idAlert);
+            ps.setLong(2, idMedico);
+            ps.executeUpdate();
+        }
+    }
+
+    // archivia un alert di questo medico
+    public static void archive(long idAlert, long idMedico) throws Exception {
+        String sql = "UPDATE alert SET archiviato = TRUE WHERE id_alert = ? AND id_medico = ?";
+
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, idAlert);
+            ps.setLong(2, idMedico);
+            ps.executeUpdate();
+        }
+    }
+
+    public static boolean hasActiveAlert(long idPaz, long idMedico) {
+        String sql = "SELECT 1 FROM alert WHERE id_paz = ? AND id_medico = ? AND archiviato = FALSE LIMIT 1";
+
+        try (Connection con = DBConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setLong(1, idPaz);
+            ps.setLong(2, idMedico);
+
+            ResultSet rs = ps.executeQuery();
+            return rs.next(); // true se esiste almeno una riga
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return false;
+        }
+    }
+
 }

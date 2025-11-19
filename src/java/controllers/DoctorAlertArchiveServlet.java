@@ -5,23 +5,18 @@
 package controllers;
 
 import dao.AlertDAO;
-import dao.PazienteDAO;
-import model.Paziente;
-import java.util.Map;
-import java.util.HashMap;
-import model.Alert;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
-import java.io.IOException;
-import java.util.List;
 
-@WebServlet("/doctor/alerts")
-public class DoctorAlertsServlet extends HttpServlet {
+import java.io.IOException;
+
+@WebServlet("/doctor/alerts/archive")
+public class DoctorAlertArchiveServlet extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
         HttpSession s = req.getSession(false);
@@ -30,19 +25,19 @@ public class DoctorAlertsServlet extends HttpServlet {
             return;
         }
 
-        try {
-            long idMedico = (long) s.getAttribute("id_medico");
-            List<Alert> alerts = AlertDAO.getAlertsByMedico(idMedico);
-            Map<Long, Paziente> pazById = new HashMap<>();
-            for (Alert a : alerts) {
-                Paziente p = PazienteDAO.getByIdPaziente(a.getIdPaz());
-                pazById.put(a.getIdPaz(), p);
-            }
+        String idStr = req.getParameter("id");
+        if (idStr == null) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "id alert mancante");
+            return;
+        }
 
-            req.setAttribute("alerts", alerts);
-            req.setAttribute("pazienti", pazById);
-            req.setAttribute("alerts", alerts);
-            req.getRequestDispatcher("/doctor_alerts.jsp").forward(req, resp);
+        try {
+            long idAlert = Long.parseLong(idStr);
+            long idMedico = (long) s.getAttribute("id_medico");
+
+            AlertDAO.archive(idAlert, idMedico);
+
+            resp.sendRedirect(req.getContextPath() + "/doctor/alerts");
         } catch (Exception e) {
             throw new ServletException(e);
         }
