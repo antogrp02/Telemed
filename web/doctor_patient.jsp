@@ -4,11 +4,6 @@
     Author     : Antonio
 --%>
 
-<%-- 
-    Document   : doctor_patient
-    Author     : Antonio + ChatGPT
---%>
-
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.util.List" %>
 <%@ page import="model.Paziente, model.Parametri, model.Risk, model.Questionario, model.Alert" %>
@@ -136,14 +131,34 @@
                                 <%= (paz != null) ? paz.getNome() + " " + paz.getCognome() : "N/D"%>
                             </div>
                         </div>
-                        <div style="text-align:right; font-size:13px; color:#64748b;">
-                            CF:
-                            <strong>
-                                <%= (paz != null) ? paz.getCf() : "N/D"%>
-                            </strong>
+
+                        <div style="text-align:right;">
+                            <div style="font-size:13px; color:#64748b;">
+                                CF:
+                                <strong>
+                                    <%= (paz != null) ? paz.getCf() : "N/D"%>
+                                </strong>
+                            </div>
+
+                            <!-- 🔵 PULSANTE CHAT -->
+                            <a href="chat?id=<%= paz != null ? paz.getIdPaz() : 0%>"
+                               style="
+                               margin-top:6px;
+                               display:inline-block;
+                               padding:6px 12px;
+                               background:#0ea5e9;
+                               color:white;
+                               border-radius:8px;
+                               font-size:13px;
+                               text-decoration:none;
+                               font-weight:500;
+                               ">
+                                💬 Apri Chat
+                            </a>
                         </div>
                     </div>
                 </div>
+
 
                 <!-- Card parametri sintetici -->
                 <div class="grid-4">
@@ -296,7 +311,7 @@
                                 <div style="color:#64748b;">Nessun alert attivo per questo paziente.</div>
 
                                 <% } else {
-    for (Alert a : alerts) {%>
+                                    for (Alert a : alerts) {%>
 
                                 <div class="alerts-item">
 
@@ -326,7 +341,7 @@
 
                                 <%   } // end for
                                     } // end else
-                                %>
+%>
                             </div>
                         </div>
                     </div>

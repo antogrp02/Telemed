@@ -52,6 +52,7 @@
     <div class="sidebar">
         <a href="dashboard">Dashboard</a>
         <a class="active" href="questionnaire">Questionario</a>
+        <a href="chat">Chat & Televisita</a>
         <a href="metrics">Storico Parametri</a>
     </div>
 
