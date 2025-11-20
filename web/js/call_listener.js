@@ -8,6 +8,7 @@
 
 let callPopup = null;
 let incomingCallerId = null;
+let _callSignalSocket = null;
 
 window.initCallListener = function(myId) {
 
@@ -15,25 +16,33 @@ window.initCallListener = function(myId) {
     const basePath = location.pathname.split("/")[1];
     const wsUrl = proto + location.host + "/" + basePath + "/ws/video/" + myId;
 
-    const socket = new WebSocket(wsUrl);
+    _callSignalSocket = new WebSocket(wsUrl);
 
-    socket.onopen = () => console.log("Call listener attivo");
+    _callSignalSocket.onopen = () =>
+        console.log("Call listener attivo per utente:", myId);
 
-    socket.onmessage = (event) => {
+    _callSignalSocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        if (data.type === "offer") {
+        // ================================
+        //   1) CHIAMATA IN ARRIVO (OFFERTA INIZIALE)
+        // ================================
+        if (data.type === "offer-init") {  
             incomingCallerId = data.from;
             showIncomingCallPopup();
+            return;
         }
 
+        // ================================
+        //   2) CANCELLAZIONE CHIAMATA
+        // ================================
         if (data.type === "hangup") {
             closeIncomingCallPopup();
         }
     };
-
-    window._callSignalSocket = socket; // globale
 };
+
+
 
 // =========================
 //  POPUP CHIAMATA IN ARRIVO
@@ -41,7 +50,6 @@ window.initCallListener = function(myId) {
 
 function showIncomingCallPopup() {
 
-    // Se è già aperto → ignora
     if (callPopup) return;
 
     callPopup = document.createElement("div");
@@ -58,7 +66,6 @@ function showIncomingCallPopup() {
 
     document.body.appendChild(callPopup);
 
-    // Listener pulsanti
     document.getElementById("btnAcceptCall").onclick = acceptIncomingCall;
     document.getElementById("btnRejectCall").onclick = rejectIncomingCall;
 }
@@ -70,22 +77,26 @@ function closeIncomingCallPopup() {
     }
 }
 
+
+
 // =========================
 //  AZIONI PULSANTI
 // =========================
 
 function acceptIncomingCall() {
+
     closeIncomingCallPopup();
 
-    // Mostra finestra video
+    // Mostra finestra video universale
     document.getElementById("videoCallWindow").style.display = "block";
 
-    // Avvia WebRTC ma come "rispondente"
-    startTelevisita();
+    // Avvia WebRTC come RISPOINDENTE
+    // Passiamo l'ID chiamante → serve a webrtc.js
+    startTelevisita(incomingCallerId);
 }
 
 function rejectIncomingCall() {
-    // Notifica rifiuto
+
     _callSignalSocket.send(JSON.stringify({
         type: "hangup",
         to: incomingCallerId
@@ -95,3 +106,22 @@ function rejectIncomingCall() {
 }
 
 
+
+// =========================
+//   AVVIA CHIAMATA USCENTE
+// =========================
+
+window.startOutgoingCall = function(receiverId) {
+
+    // Mostra subito finestra video
+    document.getElementById("videoCallWindow").style.display = "block";
+
+    // Avvia WebRTC come CHIAMANTE
+    startTelevisita(receiverId);
+
+    // Notifica al destinatario che lo stai chiamando
+    _callSignalSocket.send(JSON.stringify({
+        type: "offer-init",
+        to: receiverId
+    }));
+};

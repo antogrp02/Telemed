@@ -2,6 +2,7 @@
     Document   : patient_chat
     Author     : Antonio
 --%>
+
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.util.List" %>
 <%@ page import="model.ChatMessage, model.Paziente, model.Medico" %>
@@ -12,9 +13,9 @@
             return "";
         }
         text = text.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;");
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace("\"", "&quot;");
         String urlRegex = "(https?://[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=%]+)";
         text = text.replaceAll(urlRegex, "<a href=\"$1\" target=\"_blank\" rel=\"noopener noreferrer\">$1</a>");
         return text;
@@ -193,129 +194,6 @@
             .video-btn:hover {
                 background: hsl(var(--secondary) / 0.8);
             }
-
-            /* ===================== VIDEO CALL WINDOW ===================== */
-
-            #videoCallWindow {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                width: 900px;
-                max-width: 95%;
-                height: 550px;
-                transform: translate(-50%, -50%);
-                background: #101010;
-                border-radius: 16px;
-                box-shadow: 0 0 35px rgba(0,0,0,0.45);
-                padding: 14px;
-                display: none;
-                z-index: 5000;
-            }
-
-            #remoteVideoContainer {
-                position: relative;
-                width: 100%;
-                height: 100%;
-                background: black;
-                border-radius: 12px;
-                overflow: hidden;
-            }
-
-            #remoteVideo {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-
-            /* Local video sovrapposto (WhatsApp style) */
-            #localVideo {
-                position: absolute;
-                bottom: 20px;
-                right: 20px;
-                width: 190px;
-                height: 130px;
-                background: #000;
-                border-radius: 10px;
-                object-fit: cover;
-                border: 2px solid white;
-                z-index: 10;
-            }
-
-            /* === Control Buttons (WhatsApp style) === */
-            .video-controls {
-                position: absolute;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                display: flex;
-                gap: 18px;
-                z-index: 20;
-            }
-
-            .control-btn {
-                width: 55px;
-                height: 55px;
-                border-radius: 50%;
-                background: rgba(255,255,255,0.13);
-                backdrop-filter: blur(8px);
-                border: 2px solid rgba(255,255,255,0.25);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                transition: 0.2s;
-                color: white;
-                font-size: 22px;
-            }
-
-            .control-btn:hover {
-                background: rgba(255,255,255,0.2);
-            }
-
-            .end-call {
-                background: #ff3b30 !important;
-                border-color: #ff3b30 !important;
-            }
-            .end-call:hover {
-                filter: brightness(1.15);
-            }
-
-            /* Overlay WhatsApp quando il remote video non è ancora attivo */
-            #callWaitingOverlay {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.75);
-                backdrop-filter: blur(4px);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-size: 18px;
-                gap: 10px;
-                z-index: 15;
-            }
-
-            /* Spinner WhatsApp */
-            .spinner {
-                width: 42px;
-                height: 42px;
-                border: 4px solid rgba(255,255,255,0.2);
-                border-top-color: white;
-                border-radius: 50%;
-                animation: spin 0.9s linear infinite;
-            }
-
-            @keyframes spin {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-
-
         </style>
     </head>
     <body>
@@ -397,31 +275,8 @@
             </div>
         </div>
 
-        <!-- ====================== VIDEO CALL WINDOW ====================== -->
-        <div id="videoCallWindow">
-
-            <div id="remoteVideoContainer">
-                <video id="remoteVideo" autoplay playsinline></video>
-                <video id="localVideo" autoplay muted playsinline></video>
-
-                <!-- =================== OVERLAY IN STILE WHATSAPP =================== -->
-                <div id="callWaitingOverlay">
-                    <div class="spinner"></div>
-                    <p style="font-size:22px; margin:12px 0 0 0;">Chiamata in corso…</p>
-                    <p style="font-size:14px; opacity:0.8;">In attesa che il medico si connetta</p>
-                </div>
-
-                <!-- CONTROLLI VIDEOCHAT -->
-                <div class="video-controls">
-                    <div id="btnMic" class="control-btn" onclick="toggleMic()">🎤</div>
-                    <div id="btnCam" class="control-btn" onclick="toggleCam()">📷</div>
-                    <div class="control-btn end-call" onclick="closeVideoCall()">✖</div>
-                </div>
-
-            </div>
-
-        </div>
-
+        <!-- ======= FINESTRA VIDEO GLOBALE (INCLUSA) ======= -->
+        <%@ include file="/WEB-INF/includes/video_window.jsp" %>
 
         <script>
             const MY_ID = <%= myUserId != null ? myUserId : -1%>;
@@ -455,9 +310,9 @@
 
             function formatMessage(text) {
                 text = text.replace(/&/g, "&amp;")
-                        .replace(/</g, "&lt;")
-                        .replace(/>/g, "&gt;")
-                        .replace(/"/g, "&quot;");
+                           .replace(/</g, "&lt;")
+                           .replace(/>/g, "&gt;")
+                           .replace(/"/g, "&quot;");
                 const urlRegex = /(https?:\/\/[\w\-._~:\/?#\[\]@!$&'()*+,;=%]+)/g;
                 text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
                 return text;
@@ -525,42 +380,14 @@
         <script src="<%= ctx%>/js/webrtc.js"></script>
 
         <script>
-            /* ====== MUTE / UNMUTE MICROFONO ====== */
-            function toggleMic() {
-                micEnabled = !micEnabled;
-
-                const tracks = localStream.getAudioTracks();  // CORRETTO
-                tracks.forEach(t => t.enabled = micEnabled);
-
-                document.getElementById("btnMic").textContent = micEnabled ? "🎤" : "🔇";
-            }
-
-            /* ====== CAMERA ON/OFF ====== */
-            function toggleCam() {
-                camEnabled = !camEnabled;
-
-                const tracks = localStream.getVideoTracks();  // CORRETTO
-                tracks.forEach(t => t.enabled = camEnabled);
-
-                document.getElementById("btnCam").textContent = camEnabled ? "📷" : "🚫";
-            }
-
-            /* ====== APRI FINESTRA ====== */
-            function openVideoCall() {
-                document.getElementById("videoCallWindow").style.display = "block";
-                startTelevisita();   // AVVIA WEBRTC
-            }
-
-            /* ====== CHIUDI FINESTRA ====== */
-            function closeVideoCall() {
-                document.getElementById("videoCallWindow").style.display = "none";
-                hangupCall();        // CORRETTO
-            }
-        </script>
-
-        <script>
             initTelevisit(<%= myUserId%>, <%= otherUserId%>);
         </script>
 
+        <!-- LISTENER CHIAMATE IN ARRIVO (DA QUALSIASI PAGINA) -->
+        <script src="<%= ctx%>/js/call_listener.js"></script>
+        <script>
+            initCallListener(<%= myUserId%>);
+        </script>
+        
     </body>
 </html>

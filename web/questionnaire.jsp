@@ -128,6 +128,13 @@
 
     </div>
 </div>
+<script src="${ctx}/js/webrtc.js"></script>
+<script src="${ctx}/js/call_listener.js"></script>
+
+<script>
+    initCallListener(<%= session.getAttribute("id_utente") %>);
+</script>
+
 
 </body>
 </html>

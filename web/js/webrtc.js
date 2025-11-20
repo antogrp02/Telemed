@@ -67,6 +67,10 @@ function setupSignalSocket() {
             return;
         }
 
+        // ⛔️ IGNORA "offer-init" (gestita dal call_listener)
+        if (data.type === "offer-init")
+            return;
+
         switch (data.type) {
             case "offer":
                 console.log("Ricevuta OFFER");
@@ -95,11 +99,18 @@ function setupSignalSocket() {
         console.error("Errore WebSocket:", err);
 }
 
+
 // ==========================
 //  AVVIO TELEVISITA
 // ==========================
 
-window.startTelevisita = async function () {
+window.startTelevisita = async function (targetId) {
+
+    // Imposta il destinatario SOLO se startTelevisita riceve un ID
+    if (targetId) {
+        remoteUserId = targetId;
+    }
+
     if (!rtcSocket || rtcSocket.readyState !== WebSocket.OPEN) {
         return alert("Errore: canale di segnalazione non pronto.");
     }
@@ -117,6 +128,7 @@ window.startTelevisita = async function () {
 
     console.log("Inviata OFFER");
 };
+
 
 // ==========================
 //  CONFIGURARE PeerConnection
@@ -193,28 +205,53 @@ async function handleAnswer(data) {
 }
 
 // ==========================
-//  CONTROLLI UTENTE (mute, cam)
+//  CONTROLLI GLOBALI
 // ==========================
 
+// APRI FINESTRA VIDEO
+window.openVideoCall = function () {
+    const win = document.getElementById("videoCallWindow");
+    if (win)
+        win.style.display = "block";
+
+    startTelevisita();   // avvia la chiamata
+};
+
+// CHIUDI FINESTRA
+window.closeVideoCall = function () {
+    const win = document.getElementById("videoCallWindow");
+    if (win)
+        win.style.display = "none";
+
+    hangupCall();
+};
+
+// MUTE / UNMUTE
 window.toggleMic = function () {
     if (!localStream)
         return;
-    micEnabled = !micEnabled;
 
+    micEnabled = !micEnabled;
     localStream.getAudioTracks().forEach(t => t.enabled = micEnabled);
 
-    document.getElementById("btnMic").textContent = micEnabled ? "🎤" : "🔇";
+    const btn = document.getElementById("btnMic");
+    if (btn)
+        btn.textContent = micEnabled ? "🎤" : "🔇";
 };
 
+// CAMERA ON/OFF
 window.toggleCam = function () {
     if (!localStream)
         return;
-    camEnabled = !camEnabled;
 
+    camEnabled = !camEnabled;
     localStream.getVideoTracks().forEach(t => t.enabled = camEnabled);
 
-    document.getElementById("btnCam").textContent = camEnabled ? "📷" : "🚫";
+    const btn = document.getElementById("btnCam");
+    if (btn)
+        btn.textContent = camEnabled ? "📷" : "🚫";
 };
+
 
 // ==========================
 //  TERMINARE LA CHIAMATA
@@ -241,8 +278,10 @@ function endCallUI() {
     }
 
     // Svuota i video
-    if (localVideo) localVideo.srcObject = null;
-    if (remoteVideo) remoteVideo.srcObject = null;
+    if (localVideo)
+        localVideo.srcObject = null;
+    if (remoteVideo)
+        remoteVideo.srcObject = null;
 
     // MOSTRA overlay WhatsApp "In attesa..."
     const overlay = document.getElementById("callWaitingOverlay");
