@@ -219,7 +219,7 @@
                     <div class="chat-header">
                         <h3 class="chat-title">Chat Sicura</h3>
                         <p class="chat-description">
-                            Comunicazione con <%= med != null ? (med.getNome() + " " + med.getCognome()) : "il medico"%>
+                            Comunicazione con il Dott. <%= med != null ? (med.getNome() + " " + med.getCognome()) : "il medico"%>
                         </p>
                     </div>
 
