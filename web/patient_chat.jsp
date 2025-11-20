@@ -193,6 +193,129 @@
             .video-btn:hover {
                 background: hsl(var(--secondary) / 0.8);
             }
+
+            /* ===================== VIDEO CALL WINDOW ===================== */
+
+            #videoCallWindow {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                width: 900px;
+                max-width: 95%;
+                height: 550px;
+                transform: translate(-50%, -50%);
+                background: #101010;
+                border-radius: 16px;
+                box-shadow: 0 0 35px rgba(0,0,0,0.45);
+                padding: 14px;
+                display: none;
+                z-index: 5000;
+            }
+
+            #remoteVideoContainer {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                background: black;
+                border-radius: 12px;
+                overflow: hidden;
+            }
+
+            #remoteVideo {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            /* Local video sovrapposto (WhatsApp style) */
+            #localVideo {
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                width: 190px;
+                height: 130px;
+                background: #000;
+                border-radius: 10px;
+                object-fit: cover;
+                border: 2px solid white;
+                z-index: 10;
+            }
+
+            /* === Control Buttons (WhatsApp style) === */
+            .video-controls {
+                position: absolute;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                gap: 18px;
+                z-index: 20;
+            }
+
+            .control-btn {
+                width: 55px;
+                height: 55px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.13);
+                backdrop-filter: blur(8px);
+                border: 2px solid rgba(255,255,255,0.25);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: 0.2s;
+                color: white;
+                font-size: 22px;
+            }
+
+            .control-btn:hover {
+                background: rgba(255,255,255,0.2);
+            }
+
+            .end-call {
+                background: #ff3b30 !important;
+                border-color: #ff3b30 !important;
+            }
+            .end-call:hover {
+                filter: brightness(1.15);
+            }
+
+            /* Overlay WhatsApp quando il remote video non è ancora attivo */
+            #callWaitingOverlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.75);
+                backdrop-filter: blur(4px);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 18px;
+                gap: 10px;
+                z-index: 15;
+            }
+
+            /* Spinner WhatsApp */
+            .spinner {
+                width: 42px;
+                height: 42px;
+                border: 4px solid rgba(255,255,255,0.2);
+                border-top-color: white;
+                border-radius: 50%;
+                animation: spin 0.9s linear infinite;
+            }
+
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+
         </style>
     </head>
     <body>
@@ -219,7 +342,7 @@
                     <div class="chat-header">
                         <h3 class="chat-title">Chat Sicura</h3>
                         <p class="chat-description">
-                            Comunicazione con il Dott. <%= med != null ? (med.getNome() + " " + med.getCognome()) : "il medico"%>
+                            Comunicazione con il Dott.<%= med != null ? (med.getNome() + " " + med.getCognome()) : "il medico"%>
                         </p>
                     </div>
 
@@ -265,7 +388,7 @@
                             <button type="button" class="send-btn" onclick="sendMessage()">
                                 💬 Invia
                             </button>
-                            <button type="button" class="video-btn" onclick="startVideo()">
+                            <button type="button" class="video-btn" onclick="openVideoCall()">
                                 📹 Avvia video
                             </button>
                         </div>
@@ -274,108 +397,169 @@
             </div>
         </div>
 
+        <!-- ====================== VIDEO CALL WINDOW ====================== -->
+        <div id="videoCallWindow">
+
+            <div id="remoteVideoContainer">
+                <video id="remoteVideo" autoplay playsinline></video>
+                <video id="localVideo" autoplay muted playsinline></video>
+
+                <!-- =================== OVERLAY IN STILE WHATSAPP =================== -->
+                <div id="callWaitingOverlay">
+                    <div class="spinner"></div>
+                    <p style="font-size:22px; margin:12px 0 0 0;">Chiamata in corso…</p>
+                    <p style="font-size:14px; opacity:0.8;">In attesa che il medico si connetta</p>
+                </div>
+
+                <!-- CONTROLLI VIDEOCHAT -->
+                <div class="video-controls">
+                    <div id="btnMic" class="control-btn" onclick="toggleMic()">🎤</div>
+                    <div id="btnCam" class="control-btn" onclick="toggleCam()">📷</div>
+                    <div class="control-btn end-call" onclick="closeVideoCall()">✖</div>
+                </div>
+
+            </div>
+
+        </div>
+
+
         <script>
-    const MY_ID = <%= myUserId != null ? myUserId : -1%>;
-    const OTHER_ID = <%= otherUserId != null ? otherUserId : -1%>;
-    const ctx = "<%= ctx%>";
+            const MY_ID = <%= myUserId != null ? myUserId : -1%>;
+            const OTHER_ID = <%= otherUserId != null ? otherUserId : -1%>;
+            const ctx = "<%= ctx%>";
 
-    const proto = (location.protocol === "https:") ? "wss://" : "ws://";
-    const wsUrl = proto + location.host + ctx + "/ws/chat/" + MY_ID;
+            const proto = (location.protocol === "https:") ? "wss://" : "ws://";
+            const wsUrl = proto + location.host + ctx + "/ws/chat/" + MY_ID;
 
-    const chatDiv = document.getElementById("chatMessages");
-    const input = document.getElementById("chatInput");
+            const chatDiv = document.getElementById("chatMessages");
+            const input = document.getElementById("chatInput");
 
-    let ws = new WebSocket(wsUrl);
+            let ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => {
-        scrollBottom();
-    };
+            ws.onopen = () => {
+                scrollBottom();
+            };
 
-    ws.onmessage = (event) => {
-        const msg = JSON.parse(event.data);
-        appendMessage(msg);
-    };
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                appendMessage(msg);
+            };
 
-    ws.onerror = (e) => {
-        console.error("WS error", e);
-    };
+            ws.onerror = (e) => {
+                console.error("WS error", e);
+            };
 
-    function scrollBottom() {
-        chatDiv.scrollTop = chatDiv.scrollHeight;
-    }
+            function scrollBottom() {
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+            }
 
-    function formatMessage(text) {
-        text = text.replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;");
-        const urlRegex = /(https?:\/\/[\w\-._~:\/?#\[\]@!$&'()*+,;=%]+)/g;
-        text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-        return text;
-    }
+            function formatMessage(text) {
+                text = text.replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/"/g, "&quot;");
+                const urlRegex = /(https?:\/\/[\w\-._~:\/?#\[\]@!$&'()*+,;=%]+)/g;
+                text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+                return text;
+            }
 
-    function appendMessage(msg) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "chat-msg-row " + (msg.mine ? "mine" : "other");
+            function appendMessage(msg) {
+                const wrapper = document.createElement("div");
+                wrapper.className = "chat-msg-row " + (msg.mine ? "mine" : "other");
 
-        const sender = msg.mine ? "Paziente" : "Medico";
+                const sender = msg.mine ? "Paziente" : "Medico";
 
-        const box = document.createElement("div");
+                const box = document.createElement("div");
 
-        const senderSpan = document.createElement("span");
-        senderSpan.className = "chat-sender";
-        senderSpan.textContent = sender;
+                const senderSpan = document.createElement("span");
+                senderSpan.className = "chat-sender";
+                senderSpan.textContent = sender;
 
-        const colon = document.createTextNode(": ");
+                const colon = document.createTextNode(": ");
 
-        const textSpan = document.createElement("span");
-        textSpan.className = "chat-text";
-        textSpan.innerHTML = formatMessage(msg.text);
+                const textSpan = document.createElement("span");
+                textSpan.className = "chat-text";
+                textSpan.innerHTML = formatMessage(msg.text);
 
-        const time = document.createElement("div");
-        time.className = "chat-time";
+                const time = document.createElement("div");
+                time.className = "chat-time";
 
-        try {
-            const d = new Date(msg.sentAt);
-            const h = String(d.getHours()).padStart(2, "0");
-            const m = String(d.getMinutes()).padStart(2, "0");
-            time.textContent = h + ":" + m;
-        } catch (e) {
-            time.textContent = "";
-        }
+                try {
+                    const d = new Date(msg.sentAt);
+                    const h = String(d.getHours()).padStart(2, "0");
+                    const m = String(d.getMinutes()).padStart(2, "0");
+                    time.textContent = h + ":" + m;
+                } catch (e) {
+                    time.textContent = "";
+                }
 
-        box.appendChild(senderSpan);
-        box.appendChild(colon);
-        box.appendChild(textSpan);
-        box.appendChild(time);
-        wrapper.appendChild(box);
+                box.appendChild(senderSpan);
+                box.appendChild(colon);
+                box.appendChild(textSpan);
+                box.appendChild(time);
+                wrapper.appendChild(box);
 
-        chatDiv.appendChild(wrapper);
-        scrollBottom();
-    }
+                chatDiv.appendChild(wrapper);
+                scrollBottom();
+            }
 
-    function sendMessage() {
-        const text = input.value.trim();
-        if (!text || ws.readyState !== WebSocket.OPEN)
-            return;
+            function sendMessage() {
+                const text = input.value.trim();
+                if (!text || ws.readyState !== WebSocket.OPEN)
+                    return;
 
-        ws.send(JSON.stringify({
-            destId: OTHER_ID,
-            text: text
-        }));
-        input.value = "";
-    }
+                ws.send(JSON.stringify({
+                    destId: OTHER_ID,
+                    text: text
+                }));
+                input.value = "";
+            }
 
-    input.addEventListener("keyup", (e) => {
-        if (e.key === "Enter")
-            sendMessage();
-    });
+            input.addEventListener("keyup", (e) => {
+                if (e.key === "Enter")
+                    sendMessage();
+            });
+        </script>
 
-    function startVideo() {
-        alert("Videochiamata da integrare (es. WebRTC o piattaforma esterna).");
-    }
+        <!-- ====================== WEBRTC ====================== -->
+        <script src="<%= ctx%>/js/webrtc.js"></script>
 
-    scrollBottom();
+        <script>
+            /* ====== MUTE / UNMUTE MICROFONO ====== */
+            function toggleMic() {
+                micEnabled = !micEnabled;
+
+                const tracks = localStream.getAudioTracks();  // CORRETTO
+                tracks.forEach(t => t.enabled = micEnabled);
+
+                document.getElementById("btnMic").textContent = micEnabled ? "🎤" : "🔇";
+            }
+
+            /* ====== CAMERA ON/OFF ====== */
+            function toggleCam() {
+                camEnabled = !camEnabled;
+
+                const tracks = localStream.getVideoTracks();  // CORRETTO
+                tracks.forEach(t => t.enabled = camEnabled);
+
+                document.getElementById("btnCam").textContent = camEnabled ? "📷" : "🚫";
+            }
+
+            /* ====== APRI FINESTRA ====== */
+            function openVideoCall() {
+                document.getElementById("videoCallWindow").style.display = "block";
+                startTelevisita();   // AVVIA WEBRTC
+            }
+
+            /* ====== CHIUDI FINESTRA ====== */
+            function closeVideoCall() {
+                document.getElementById("videoCallWindow").style.display = "none";
+                hangupCall();        // CORRETTO
+            }
+        </script>
+
+        <script>
+            initTelevisit(<%= myUserId%>, <%= otherUserId%>);
         </script>
 
     </body>

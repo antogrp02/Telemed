@@ -336,3 +336,47 @@ h2 {
   color: #475569;
   font-size: 0.95rem;
 }
+
+#incomingCallPopup {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 14px;
+    color: white;
+    z-index: 6000;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+}
+
+.call-popup-title {
+    font-size: 18px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.call-popup-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-accept {
+    background: #4CAF50;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+}
+
+.btn-reject {
+    background: #e53935;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+}
