@@ -1,21 +1,15 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package controllers;
 
 import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ServerEndpoint("/ws/video/{userId}")
 public class VideoSignalEndpoint {
 
-    // userId -> sessione WebSocket
     private static final Map<Long, Session> SESSIONS = new ConcurrentHashMap<>();
 
     @OnOpen
@@ -34,10 +28,11 @@ public class VideoSignalEndpoint {
             Session dest = SESSIONS.get(toId);
             if (dest != null && dest.isOpen()) {
 
-                // Inseriamo "from": <ID mittente> nel JSON prima di inviarlo
+                // arricchiamo il JSON con "from": <mittente>
                 String enriched = injectFromField(message, fromId);
 
-                dest.getBasicRemote().sendText(enriched);
+                // *** FIX: invio async per evitare race e blocchi ***
+                dest.getAsyncRemote().sendText(enriched);
             }
 
         } catch (Exception e) {
@@ -58,9 +53,6 @@ public class VideoSignalEndpoint {
         thr.printStackTrace();
     }
 
-    // -------------------------------
-    //  UTILITIES
-    // -------------------------------
     private Long extractToUserId(String json) {
         try {
             String key = "\"to\"";
@@ -74,25 +66,21 @@ public class VideoSignalEndpoint {
             while (pos < json.length() && Character.isWhitespace(json.charAt(pos))) pos++;
 
             int start = pos;
-            while (pos < json.length() && 
+            while (pos < json.length() &&
                   (Character.isDigit(json.charAt(pos)) || json.charAt(pos) == '-')) pos++;
 
             String num = json.substring(start, pos).trim();
             return Long.parseLong(num);
+
         } catch (Exception e) {
             return null;
         }
     }
 
-    // Aggiunge il campo "from": mittente
     private String injectFromField(String json, Long fromId) {
 
-        // Se già presente, non riscriviamo
-        if (json.contains("\"from\"")) {
-            return json;
-        }
+        if (json.contains("\"from\"")) return json;
 
-        // Inseriamo "from" subito dopo "{"
         int brace = json.indexOf("{");
         if (brace < 0) return json;
 

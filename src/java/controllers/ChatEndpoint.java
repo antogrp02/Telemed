@@ -21,11 +21,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ChatEndpoint {
 
     private static final Map<Long, Session> SESSIONS = new ConcurrentHashMap<>();
+    private static final Map<Long, Object> LOCKS = new ConcurrentHashMap<>();
     private static final Gson gson = new Gson();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("idUtente") long idUtente) {
         SESSIONS.put(idUtente, session);
+        LOCKS.put(idUtente, new Object());
         session.getUserProperties().put("idUtente", idUtente);
     }
 
@@ -34,34 +36,22 @@ public class ChatEndpoint {
         Object id = session.getUserProperties().get("idUtente");
         if (id instanceof Long) {
             SESSIONS.remove((Long) id);
+            LOCKS.remove((Long) id);
         }
     }
 
-    @OnError
-    public void onError(Session session, Throwable thr) {
-        thr.printStackTrace();
-    }
-
-    // JSON IN: { "destId": 123, "text": "ciao" }
-    // JSON OUT: { "from": 1, "to": 2, "text": "ciao", "sentAt": "2025-11-20T10:10:10", "mine": true/false }
     @OnMessage
     public void onMessage(String message, Session session) {
         try {
-            Object uidObj = session.getUserProperties().get("idUtente");
-            if (!(uidObj instanceof Long)) {
-                return;
-            }
-            long mittenteId = (Long) uidObj;
-
+            long mittenteId = (Long) session.getUserProperties().get("idUtente");
             IncomingMessage in = gson.fromJson(message, IncomingMessage.class);
-            if (in == null || in.destId == 0 || in.text == null || in.text.trim().isEmpty()) {
+            if (in == null || in.destId == 0 || in.text == null) {
                 return;
             }
 
             long destId = in.destId;
             String text = in.text.trim();
 
-            // 1) salva su DB
             ChatMessage m = new ChatMessage();
             m.setIdMittente(mittenteId);
             m.setIdDestinatario(destId);
@@ -71,50 +61,47 @@ public class ChatEndpoint {
 
             String sentAt = m.getInviatoIl().toInstant().toString();
 
-            // 2) prepara JSON per mittente e destinatario
-            OutgoingMessage outForSender = new OutgoingMessage();
-            outForSender.from = mittenteId;
-            outForSender.to = destId;
-            outForSender.text = text;
-            outForSender.sentAt = sentAt;
-            outForSender.mine = true;
+            OutgoingMessage outSender = new OutgoingMessage(mittenteId, destId, text, sentAt, true);
+            OutgoingMessage outDest = new OutgoingMessage(mittenteId, destId, text, sentAt, false);
 
-            OutgoingMessage outForDest = new OutgoingMessage();
-            outForDest.from = mittenteId;
-            outForDest.to = destId;
-            outForDest.text = text;
-            outForDest.sentAt = sentAt;
-            outForDest.mine = false;
-
-            String jsonSender = gson.toJson(outForSender);
-            String jsonDest = gson.toJson(outForDest);
-
-            // 3) invia al mittente
-            session.getAsyncRemote().sendText(jsonSender);
-
-            // 4) invia al destinatario se è collegato
-            Session destSession = SESSIONS.get(destId);
-            if (destSession != null && destSession.isOpen()) {
-                destSession.getAsyncRemote().sendText(jsonDest);
-            }
+            safeSend(mittenteId, gson.toJson(outSender));
+            safeSend(destId, gson.toJson(outDest));
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // DTO interni
+    private static void safeSend(Long id, String msg) {
+        Session s = SESSIONS.get(id);
+        Object lock = LOCKS.get(id);
+        if (s == null || !s.isOpen()) {
+            return;
+        }
+
+        synchronized (lock) {
+            s.getAsyncRemote().sendText(msg);
+        }
+    }
+
     private static class IncomingMessage {
+
         long destId;
         String text;
     }
 
     private static class OutgoingMessage {
-        long from;
-        long to;
-        String text;
-        String sentAt;
+
+        long from, to;
+        String text, sentAt;
         boolean mine;
+
+        OutgoingMessage(long f, long t, String txt, String at, boolean m) {
+            from = f;
+            to = t;
+            text = txt;
+            sentAt = at;
+            mine = m;
+        }
     }
 }
-
