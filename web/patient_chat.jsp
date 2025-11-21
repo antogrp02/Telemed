@@ -266,7 +266,7 @@
                             <button type="button" class="send-btn" onclick="sendMessage()">
                                 💬 Invia
                             </button>
-                            <button type="button" class="video-btn" onclick="openVideoCall()">
+                            <button type="button" class="video-btn" onclick="startOutgoingCall(<%= otherUserId %>)">
                                 📹 Avvia video
                             </button>
                         </div>
@@ -380,13 +380,7 @@
         <script src="<%= ctx%>/js/webrtc.js"></script>
 
         <script>
-            initTelevisit(<%= myUserId%>, <%= otherUserId%>);
-        </script>
-
-        <!-- LISTENER CHIAMATE IN ARRIVO (DA QUALSIASI PAGINA) -->
-        <script src="<%= ctx%>/js/call_listener.js"></script>
-        <script>
-            initCallListener(<%= myUserId%>);
+            initTelevisit(<%= myUserId%>);
         </script>
         
     </body>

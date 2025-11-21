@@ -1,16 +1,12 @@
-/* 
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/JavaScript.js to edit this template
- */
 // ==========================
-//  WebRTC Televisita
-//  Sistema Medico–Paziente
+//  WebRTC Televisita Unificato
 // ==========================
 
-// Variabili globali
-let localUserId = null;
-let remoteUserId = null;
+// Identità
+let localUserId = null;   // mio id utente
+let remoteUserId = null;  // id dell'altro utente
 
+// WebRTC
 let rtcSocket = null;
 let pc = null;
 
@@ -23,120 +19,234 @@ let remoteVideo = null;
 let micEnabled = true;
 let camEnabled = true;
 
+// Stato chiamata
+let incomingCallerId = null;   // chi mi sta chiamando
+let pendingOffer = null;       // offer ricevuta prima di ACCETTARE
+let inCall = false;            // siamo in una chiamata attiva?
+
 const rtcConfig = {
     iceServers: [
-        {urls: "stun:stun.l.google.com:19302"}
+        { urls: "stun:stun.l.google.com:19302" }
     ]
 };
 
 // ==========================
 //  INIZIALIZZAZIONE
 // ==========================
-window.initTelevisit = function (myId, otherId) {
+window.initTelevisit = function (myId) {
     localUserId = myId;
-    remoteUserId = otherId;
 
     localVideo = document.getElementById("localVideo");
     remoteVideo = document.getElementById("remoteVideo");
 
     if (!localVideo || !remoteVideo) {
-        console.error("Elementi video mancanti nelle JSP.");
+        console.error("Elementi video mancanti (localVideo / remoteVideo).");
         return;
     }
 
-    setupSignalSocket();
-};
-
-// ==========================
-//  WEBSOCKET DI SEGNALAZIONE
-// ==========================
-function setupSignalSocket() {
-    const proto = location.protocol === "https:" ? "wss://" : "ws://";
+    const proto    = location.protocol === "https:" ? "wss://" : "ws://";
     const basePath = location.pathname.split("/")[1];
-    const wsUrl = proto + location.host + "/" + basePath + "/ws/video/" + localUserId;
+    const wsUrl    = proto + location.host + "/" + basePath + "/ws/video/" + localUserId;
 
     rtcSocket = new WebSocket(wsUrl);
 
-    rtcSocket.onopen = () => console.log("Socket di segnalazione aperto");
+    rtcSocket.onopen = () => {
+        console.log("WS WebRTC unificato connesso per utente:", localUserId);
+    };
 
     rtcSocket.onmessage = async (msg) => {
-        let data = null;
+        let data;
         try {
             data = JSON.parse(msg.data);
         } catch (e) {
+            console.error("Errore parsing messaggio WebRTC:", e);
             return;
         }
 
-        // ⛔️ IGNORA "offer-init" (gestita dal call_listener)
-        if (data.type === "offer-init")
-            return;
+        // Imposto sempre il remoteUserId dove ha senso
+        if (data.from && data.type !== "offer-init") {
+            remoteUserId = data.from;
+        }
 
         switch (data.type) {
-            case "offer":
-                console.log("Ricevuta OFFER");
-                await handleOffer(data);
+            // Notifica chiamata in arrivo (solo popup, nessun WebRTC ancora)
+            case "offer-init":
+                console.log("📞 Chiamata in arrivo da", data.from);
+                incomingCallerId = data.from;
+                showIncomingCallPopup();
                 break;
 
+            // OFFER vera e propria dal chiamante
+            case "offer":
+                console.log("📡 Ricevuta OFFER da", data.from);
+                await onIncomingOffer(data);
+                break;
+
+            // ANSWER dal ricevente (quando sei tu il chiamante)
             case "answer":
-                console.log("Ricevuta ANSWER");
+                console.log("📡 Ricevuta ANSWER da", data.from);
                 await handleAnswer(data);
                 break;
 
+            // ICE candidate
             case "candidate":
                 if (pc && data.candidate) {
-                    console.log("ICE Candidate remoto");
-                    await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+                    } catch (e) {
+                        console.error("Errore addIceCandidate:", e);
+                    }
                 }
                 break;
 
+            // Hangup
             case "hangup":
+                console.log("📴 Hangup ricevuto");
                 endCallUI();
+                closeIncomingCallPopup();
                 break;
         }
     };
 
-    rtcSocket.onerror = (err) =>
-        console.error("Errore WebSocket:", err);
-}
-
+    rtcSocket.onerror = (err) => {
+        console.error("Errore WS WebRTC:", err);
+    };
+};
 
 // ==========================
-//  AVVIO TELEVISITA
+//  CHIAMATA USCENTE
 // ==========================
 
-window.startTelevisita = async function (targetId) {
-
-    // Imposta il destinatario SOLO se startTelevisita riceve un ID
-    if (targetId) {
-        remoteUserId = targetId;
+window.startOutgoingCall = async function (receiverId) {
+    if (!rtcSocket || rtcSocket.readyState !== WebSocket.OPEN) {
+        alert("Canale WebRTC non pronto.");
+        return;
     }
 
-    if (!rtcSocket || rtcSocket.readyState !== WebSocket.OPEN) {
-        return alert("Errore: canale di segnalazione non pronto.");
+    remoteUserId = receiverId;
+    inCall = true;
+
+    showVideoWindow();
+
+    await setupPeerConnection();
+
+    // 1) Notifica che lo stai chiamando (popup lato remoto)
+    _send({
+        type: "offer-init",
+        to: remoteUserId
+    });
+
+    // 2) Crea e manda l'OFFER WebRTC
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    _send({
+        type: "offer",
+        to: remoteUserId,
+        sdp: offer
+    });
+
+    console.log("📤 Inviata OFFER a", remoteUserId);
+};
+
+// ==========================
+//  OFFER IN ENTRATA (quando sei il RICEVENTE)
+// ==========================
+
+async function onIncomingOffer(data) {
+    // Se NON ho ancora accettato la chiamata → metto in attesa
+    if (!inCall) {
+        console.log("Memorizzo OFFER in pendingOffer, in attesa di ACCETTO");
+        pendingOffer = data;
+        return;
+    }
+
+    // Se invece ho già accettato → gestisco subito
+    await handleOffer(data);
+}
+
+// Chi clicca "ACCETTA" sul popup
+window.acceptIncomingCall = async function () {
+    if (!incomingCallerId) {
+        console.warn("Nessun callerId in incomingCallerId");
+        return;
+    }
+
+    inCall = true;
+    remoteUserId = incomingCallerId;
+
+    closeIncomingCallPopup();
+    showVideoWindow();
+
+    await setupPeerConnection();
+
+    // Se avevamo già ricevuto l'OFFER, ora la applichiamo
+    if (pendingOffer) {
+        console.log("Applico OFFER pendente dopo ACCETTA");
+        await handleOffer(pendingOffer);
+        pendingOffer = null;
+    } else {
+        console.log("Accettata chiamata, in attesa di OFFER dal chiamante...");
+    }
+};
+
+// Chi clicca "RIFIUTA"
+window.rejectIncomingCall = function () {
+    if (!incomingCallerId) {
+        closeIncomingCallPopup();
+        return;
+    }
+
+    _send({
+        type: "hangup",
+        to: incomingCallerId
+    });
+
+    closeIncomingCallPopup();
+    incomingCallerId = null;
+};
+
+// ==========================
+//  GESTIONE OFFER / ANSWER
+// ==========================
+
+async function handleOffer(data) {
+    if (!remoteUserId) {
+        remoteUserId = data.from;
     }
 
     await setupPeerConnection();
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
+    await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
-    rtcSocket.send(JSON.stringify({
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+
+    _send({
+        type: "answer",
         to: remoteUserId,
-        type: "offer",
-        sdp: offer
-    }));
+        sdp: answer
+    });
 
-    console.log("Inviata OFFER");
-};
+    console.log("📤 Inviata ANSWER a", remoteUserId);
+}
 
-
-// ==========================
-//  CONFIGURARE PeerConnection
-//  (ATTENZIONE: getUserMedia QUI È CORRETTO!)
-// ==========================
-async function setupPeerConnection() {
-    if (pc)
+async function handleAnswer(data) {
+    if (!pc) {
+        console.warn("handleAnswer chiamata ma pc è nullo");
         return;
+    }
+
+    await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+    console.log("ANSWER applicata");
+}
+
+// ==========================
+//  PEER CONNECTION + MEDIA
+// ==========================
+
+async function setupPeerConnection() {
+    if (pc) return;
 
     pc = new RTCPeerConnection(rtcConfig);
 
@@ -145,169 +255,158 @@ async function setupPeerConnection() {
     remoteVideo.srcObject = remoteStream;
 
     pc.ontrack = (event) => {
-        console.log("Track remota aggiunta");
+        console.log("🎥 Track remota aggiunta");
         remoteStream.addTrack(event.track);
 
         const overlay = document.getElementById("callWaitingOverlay");
-        if (overlay)
-            overlay.style.display = "none";  // nasconde l'overlay
+        if (overlay) overlay.style.display = "none";
     };
-
 
     pc.onicecandidate = (event) => {
         if (event.candidate) {
-            rtcSocket.send(JSON.stringify({
-                to: remoteUserId,
+            _send({
                 type: "candidate",
+                to: remoteUserId,
                 candidate: event.candidate
-            }));
+            });
         }
     };
 
-    // ======== OTTIENI WEBCAM QUI ========
+    // Stream locale
     localStream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true
     });
 
-    // Mostra subito la webcam
     localVideo.srcObject = localStream;
 
-    // Aggiungi tracce
-    localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+    localStream.getTracks().forEach(t =>
+        pc.addTrack(t, localStream)
+    );
 }
 
 // ==========================
-//  OFFER → ANSWER
-// ==========================
-async function handleOffer(data) {
-    await setupPeerConnection();
-
-    await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
-    const answer = await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-
-    rtcSocket.send(JSON.stringify({
-        to: remoteUserId,
-        type: "answer",
-        sdp: answer
-    }));
-
-    console.log("Inviata ANSWER");
-}
-
-async function handleAnswer(data) {
-    if (!pc)
-        return;
-    await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-    console.log("ANSWER applicata");
-}
-
-// ==========================
-//  CONTROLLI GLOBALI
+//  UI: FINESTRA VIDEO / POPUP
 // ==========================
 
-// APRI FINESTRA VIDEO
-window.openVideoCall = function () {
+function showVideoWindow() {
     const win = document.getElementById("videoCallWindow");
-    if (win)
-        win.style.display = "block";
+    if (!win) return;
 
-    startTelevisita();   // avvia la chiamata
-};
+    win.style.display = "flex";
 
-// CHIUDI FINESTRA
+    const overlay = document.getElementById("callWaitingOverlay");
+    if (overlay) overlay.style.display = "flex";
+}
+
 window.closeVideoCall = function () {
-    const win = document.getElementById("videoCallWindow");
-    if (win)
-        win.style.display = "none";
-
-    hangupCall();
-};
-
-// MUTE / UNMUTE
-window.toggleMic = function () {
-    if (!localStream)
-        return;
-
-    micEnabled = !micEnabled;
-    localStream.getAudioTracks().forEach(t => t.enabled = micEnabled);
-
-    const btn = document.getElementById("btnMic");
-    if (btn)
-        btn.textContent = micEnabled ? "🎤" : "🔇";
-};
-
-// CAMERA ON/OFF
-window.toggleCam = function () {
-    if (!localStream)
-        return;
-
-    camEnabled = !camEnabled;
-    localStream.getVideoTracks().forEach(t => t.enabled = camEnabled);
-
-    const btn = document.getElementById("btnCam");
-    if (btn)
-        btn.textContent = camEnabled ? "📷" : "🚫";
-};
-
-
-// ==========================
-//  TERMINARE LA CHIAMATA
-// ==========================
-window.hangupCall = function () {
-    rtcSocket.send(JSON.stringify({
-        to: remoteUserId,
-        type: "hangup"
-    }));
+    if (remoteUserId) {
+        _send({
+            type: "hangup",
+            to: remoteUserId
+        });
+    }
     endCallUI();
 };
 
 function endCallUI() {
-    // Chiudi peer connection
+    inCall = false;
+    incomingCallerId = null;
+    pendingOffer = null;
+
     if (pc) {
         pc.close();
         pc = null;
     }
 
-    // Stoppa tutte le tracce locali (cam + mic)
     if (localStream) {
         localStream.getTracks().forEach(t => t.stop());
         localStream = null;
     }
 
-    // Svuota i video
-    if (localVideo)
-        localVideo.srcObject = null;
-    if (remoteVideo)
-        remoteVideo.srcObject = null;
+    if (localVideo) localVideo.srcObject = null;
+    if (remoteVideo) remoteVideo.srcObject = null;
 
-    // MOSTRA overlay WhatsApp "In attesa..."
     const overlay = document.getElementById("callWaitingOverlay");
-    if (overlay) {
-        overlay.style.display = "flex";
-    }
+    if (overlay) overlay.style.display = "flex";
 
-    console.log("Chiamata terminata");
+    const win = document.getElementById("videoCallWindow");
+    if (win) win.style.display = "none";
+
+    console.log("Chiamata terminata / stato resettato");
 }
 
+// ==========================
+//  POPUP CHIAMATA IN ARRIVO
+// ==========================
+
+function showIncomingCallPopup() {
+    if (document.getElementById("incomingCallPopup")) return;
+
+    const div = document.createElement("div");
+    div.id = "incomingCallPopup";
+    div.style.cssText = `
+        position:fixed;
+        top:20px; right:20px;
+        background:#fff;
+        padding:16px 20px;
+        border-radius:10px;
+        box-shadow:0 4px 14px rgba(0,0,0,0.25);
+        z-index:10000;
+        font-family:sans-serif;
+    `;
+
+    div.innerHTML = `
+        <div style="font-weight:600; margin-bottom:8px;">📞 Chiamata in arrivo</div>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button onclick="acceptIncomingCall()"
+                    style="padding:6px 12px; border-radius:6px; border:none; background:#28a745; color:#fff; cursor:pointer;">
+                Accetta
+            </button>
+            <button onclick="rejectIncomingCall()"
+                    style="padding:6px 12px; border-radius:6px; border:none; background:#dc3545; color:#fff; cursor:pointer;">
+                Rifiuta
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(div);
+}
+
+function closeIncomingCallPopup() {
+    const p = document.getElementById("incomingCallPopup");
+    if (p) p.remove();
+}
 
 // ==========================
-//  CONDIVISIONE SCHERMO
+//  MUTE / CAM
 // ==========================
-window.shareScreen = async function () {
-    if (!pc)
-        return;
 
-    const screenStream = await navigator.mediaDevices.getDisplayMedia({video: true});
+window.toggleMic = function () {
+    if (!localStream) return;
+    micEnabled = !micEnabled;
+    localStream.getAudioTracks().forEach(t => t.enabled = micEnabled);
 
-    const screenTrack = screenStream.getVideoTracks()[0];
-    const sender = pc.getSenders().find(s => s.track.kind === "video");
-
-    sender.replaceTrack(screenTrack);
-
-    screenTrack.onended = () => {
-        sender.replaceTrack(localStream.getVideoTracks()[0]);
-    };
+    const btn = document.getElementById("btnMic");
+    if (btn) btn.textContent = micEnabled ? "🎤" : "🔇";
 };
+
+window.toggleCam = function () {
+    if (!localStream) return;
+    camEnabled = !camEnabled;
+    localStream.getVideoTracks().forEach(t => t.enabled = camEnabled);
+
+    const btn = document.getElementById("btnCam");
+    if (btn) btn.textContent = camEnabled ? "📷" : "🚫";
+};
+
+// ==========================
+//  UTILITY SEND
+// ==========================
+function _send(obj) {
+    if (!rtcSocket || rtcSocket.readyState !== WebSocket.OPEN) {
+        console.error("WS non pronto per inviare:", obj);
+        return;
+    }
+    rtcSocket.send(JSON.stringify(obj));
+}

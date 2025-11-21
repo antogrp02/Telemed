@@ -128,12 +128,14 @@
 
     </div>
 </div>
-<script src="${ctx}/js/webrtc.js"></script>
-<script src="${ctx}/js/call_listener.js"></script>
+<%@ include file="/WEB-INF/includes/video_window.jsp" %>
 
+<script src="<%= request.getContextPath() %>/js/webrtc.js"></script>
 <script>
-    initCallListener(<%= session.getAttribute("id_utente") %>);
+    const MY_ID = <%= session.getAttribute("id_utente") %>;
+    initTelevisit(MY_ID);
 </script>
+
 
 
 </body>

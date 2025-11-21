@@ -27,15 +27,19 @@ public class VideoSignalEndpoint {
     @OnMessage
     public void onMessage(String message, Session session) {
         try {
-            // messaggio JSON di tipo:
-            // { "to": 123, "type": "offer|answer|candidate|hangup", ... }
-            Long to = extractToUserId(message);
-            if (to == null) return;
+            Long fromId = (Long) session.getUserProperties().get("userId");
+            Long toId   = extractToUserId(message);
+            if (toId == null) return;
 
-            Session dest = SESSIONS.get(to);
+            Session dest = SESSIONS.get(toId);
             if (dest != null && dest.isOpen()) {
-                dest.getBasicRemote().sendText(message);
+
+                // Inseriamo "from": <ID mittente> nel JSON prima di inviarlo
+                String enriched = injectFromField(message, fromId);
+
+                dest.getBasicRemote().sendText(enriched);
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -45,8 +49,7 @@ public class VideoSignalEndpoint {
     public void onClose(Session session, CloseReason reason) {
         Object idObj = session.getUserProperties().get("userId");
         if (idObj instanceof Long) {
-            Long id = (Long) idObj;
-            SESSIONS.remove(id);
+            SESSIONS.remove((Long) idObj);
         }
     }
 
@@ -55,10 +58,9 @@ public class VideoSignalEndpoint {
         thr.printStackTrace();
     }
 
-    /**
-     * Estrae il campo "to" dal JSON in modo minimale
-     * senza dipendere da librerie esterne.
-     */
+    // -------------------------------
+    //  UTILITIES
+    // -------------------------------
     private Long extractToUserId(String json) {
         try {
             String key = "\"to\"";
@@ -69,22 +71,33 @@ public class VideoSignalEndpoint {
             if (colon < 0) return null;
 
             int pos = colon + 1;
-            // salta spazi
-            while (pos < json.length() && Character.isWhitespace(json.charAt(pos))) {
-                pos++;
-            }
+            while (pos < json.length() && Character.isWhitespace(json.charAt(pos))) pos++;
 
-            // leggi numero fino a virgola o chiusura
             int start = pos;
-            while (pos < json.length()
-                    && (Character.isDigit(json.charAt(pos)) || json.charAt(pos) == '-')) {
-                pos++;
-            }
+            while (pos < json.length() && 
+                  (Character.isDigit(json.charAt(pos)) || json.charAt(pos) == '-')) pos++;
 
             String num = json.substring(start, pos).trim();
             return Long.parseLong(num);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // Aggiunge il campo "from": mittente
+    private String injectFromField(String json, Long fromId) {
+
+        // Se già presente, non riscriviamo
+        if (json.contains("\"from\"")) {
+            return json;
+        }
+
+        // Inseriamo "from" subito dopo "{"
+        int brace = json.indexOf("{");
+        if (brace < 0) return json;
+
+        return json.substring(0, brace + 1)
+                + "\"from\":" + fromId + ","
+                + json.substring(brace + 1);
     }
 }

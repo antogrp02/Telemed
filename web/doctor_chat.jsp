@@ -9,11 +9,13 @@
 
 <%!
     private String formatMessageJSP(String text) {
-        if (text == null) return "";
+        if (text == null) {
+            return "";
+        }
         text = text.replace("&", "&amp;")
-                   .replace("<", "&lt;")
-                   .replace(">", "&gt;")
-                   .replace("\"", "&quot;");
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
         String urlRegex = "(https?://[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=%]+)";
         text = text.replaceAll(urlRegex, "<a href=\"$1\" target=\"_blank\" rel=\"noopener noreferrer\">$1</a>");
         return text;
@@ -31,213 +33,258 @@
 
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Heart Monitor - Chat Medico</title>
-    <link rel="stylesheet" href="<%= ctx %>/css/style.css">
+    <head>
+        <title>Heart Monitor - Chat Medico</title>
+        <link rel="stylesheet" href="<%= ctx%>/css/style.css">
+        
+                <style>
+            :root {
+                --background: 0 0% 100%;
+                --foreground: 222.2 84% 4.9%;
+                --card: 0 0% 100%;
+                --card-foreground: 222.2 84% 4.9%;
+                --secondary: 210 40% 96.1%;
+                --border: 214.3 31.8% 91.4%;
+                --muted-foreground: 215.4 16.3% 46.9%;
+                --primary: 221.2 83.2% 53.3%;
+            }
 
-    <style>
-        :root {
-            --background: 0 0% 100%;
-            --foreground: 222.2 84% 4.9%;
-            --card: 0 0% 100%;
-            --card-foreground: 222.2 84% 4.9%;
-            --secondary: 210 40% 96.1%;
-            --border: 214.3 31.8% 91.4%;
-            --muted-foreground: 215.4 16.3% 46.9%;
-            --primary: 221.2 83.2% 53.3%;
-        }
+            .chat-card {
+                background: hsl(var(--card));
+                border: 1px solid hsl(var(--border));
+                border-radius: 16px;
+                box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+                overflow: hidden;
+            }
 
-        .chat-card {
-            background: hsl(var(--card));
-            border: 1px solid hsl(var(--border));
-            border-radius: 16px;
-            box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
-            overflow: hidden;
-        }
+            .chat-header {
+                padding: 24px 24px 0;
+            }
 
-        .chat-header {
-            padding: 24px 24px 0;
-        }
+            .chat-title {
+                font-size: 20px;
+                font-weight: 600;
+                color: hsl(var(--foreground));
+                margin: 0 0 4px 0;
+            }
 
-        .chat-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin: 0 0 4px;
-        }
+            .chat-description {
+                font-size: 14px;
+                color: hsl(var(--muted-foreground));
+                margin: 0;
+            }
 
-        .chat-description {
-            font-size: 14px;
-            color: hsl(var(--muted-foreground));
-        }
+            .chat-content {
+                padding: 24px;
+            }
 
-        .chat-content {
-            padding: 24px;
-        }
+            .chat-messages {
+                height: 256px;
+                border: 1px solid hsl(var(--border));
+                border-radius: 12px;
+                padding: 12px;
+                background: hsl(var(--secondary));
+                overflow-y: auto;
+                font-size: 14px;
+                margin-bottom: 12px;
+            }
 
-        .chat-messages {
-            height: 256px;
-            border: 1px solid hsl(var(--border));
-            border-radius: 12px;
-            padding: 12px;
-            background: hsl(var(--secondary));
-            overflow-y: auto;
-            font-size: 14px;
-            margin-bottom: 12px;
-        }
+            .chat-msg-row {
+                margin-bottom: 8px;
+            }
 
-        .chat-msg-row { margin-bottom: 8px; }
-        .chat-msg-row.mine { text-align: right; }
-        .chat-msg-row.other { text-align: left; }
+            .chat-msg-row.mine {
+                text-align: right;
+            }
 
-        .chat-sender {
-            font-weight: 500;
-            margin-right: 4px;
-        }
+            .chat-msg-row.other {
+                text-align: left;
+            }
 
-        .chat-text {
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
+            .chat-sender {
+                font-weight: 500;
+                color: hsl(var(--foreground));
+                margin-right: 4px;
+            }
 
-        .chat-text a {
-            color: hsl(var(--primary));
-            text-decoration: underline;
-        }
+            .chat-text {
+                color: hsl(var(--foreground));
+                word-wrap: break-word;
+                word-break: break-word;
+                white-space: pre-wrap;
+                overflow-wrap: break-word;
+            }
 
-        .chat-time {
-            font-size: 11px;
-            color: hsl(var(--muted-foreground));
-            margin-top: 2px;
-        }
+            .chat-text a {
+                color: hsl(var(--primary));
+                text-decoration: underline;
+            }
 
-        .chat-date-sep {
-            text-align: center;
-            font-size: 12px;
-            color: hsl(var(--muted-foreground));
-            margin: 16px 0;
-        }
+            .chat-time {
+                font-size: 11px;
+                color: hsl(var(--muted-foreground));
+                margin-top: 2px;
+            }
 
-        .chat-input-bar {
-            display: flex;
-            gap: 8px;
-        }
+            .chat-date-sep {
+                text-align: center;
+                font-size: 12px;
+                color: hsl(var(--muted-foreground));
+                margin: 16px 0;
+            }
 
-        .chat-input {
-            flex: 1;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid hsl(var(--border));
-        }
+            .chat-input-bar {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
 
-        .send-btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            background: hsl(var(--primary));
-            color: white;
-            font-weight: 500;
-        }
+            .chat-input {
+                flex: 1;
+                padding: 8px 12px;
+                font-size: 14px;
+                border-radius: 6px;
+                border: 1px solid hsl(var(--border));
+                background: hsl(var(--background));
+                color: hsl(var(--foreground));
+            }
 
-        .video-btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: 1px solid hsl(var(--border));
-            background: hsl(var(--secondary));
-            cursor: pointer;
-            font-weight: 500;
-        }
-    </style>
-</head>
+            .chat-input:focus {
+                outline: none;
+                border-color: hsl(var(--primary));
+                box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+            }
 
-<body>
+            .chat-input::placeholder {
+                color: hsl(var(--muted-foreground));
+            }
 
-<div class="topbar">
-    <div class="logo">Heart Monitor</div>
-    <div class="subtitle">Chat con il paziente</div>
-    <div class="spacer"></div>
-    <a href="<%= ctx %>/logout" class="toplink">Logout</a>
-</div>
+            .send-btn {
+                padding: 8px 16px;
+                border-radius: 6px;
+                border: none;
+                cursor: pointer;
+                background: hsl(var(--primary));
+                color: white;
+                font-size: 14px;
+                font-weight: 500;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
 
-<div class="layout">
+            .send-btn:hover {
+                filter: brightness(1.05);
+            }
 
-    <!-- Sidebar medico -->
-    <div class="sidebar">
-        <a href="<%= ctx %>/doctor/dashboard">Pazienti</a>
-        <a href="<%= ctx %>/doctor/alerts">Alert</a>
-        <a href="<%= ctx %>/doctor/chat?id=<%= paz != null ? paz.getIdPaz() : 0 %>" class="active">Chat</a>
-    </div>
+            .video-btn {
+                padding: 8px 16px;
+                border-radius: 6px;
+                border: 1px solid hsl(var(--border));
+                background: hsl(var(--secondary));
+                color: hsl(var(--foreground));
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
 
-    <div class="main">
-        <h2>Chat con il paziente</h2>
+            .video-btn:hover {
+                background: hsl(var(--secondary) / 0.8);
+            }
+        </style>
+    </head>
 
-        <p>
-            <strong><%= paz != null ? paz.getNome() + " " + paz.getCognome() : "Paziente" %></strong>
-            — CF: <%= paz != null ? paz.getCf() : "N/D" %>
-        </p>
+    <body>
 
-        <div class="chat-card">
+        <%@ include file="/WEB-INF/includes/video_window.jsp" %>
 
-            <div class="chat-header">
-                <h3 class="chat-title">Chat Sicura</h3>
-                <p class="chat-description">Conversazione privata con il paziente</p>
+        <div class="topbar">
+            <div class="logo">Heart Monitor</div>
+            <div class="subtitle">Chat con il paziente</div>
+            <div class="spacer"></div>
+            <a href="<%= ctx%>/logout" class="toplink">Logout</a>
+        </div>
+
+        <div class="layout">
+
+            <div class="sidebar">
+                <a href="<%= ctx%>/doctor/dashboard">Pazienti</a>
+                <a href="<%= ctx%>/doctor/alerts">Alert</a>
+                <a href="<%= ctx%>/doctor/chat?id=<%= paz != null ? paz.getIdPaz() : 0%>" class="active">Chat</a>
             </div>
 
-            <div class="chat-content">
-                <div id="chatMessages" class="chat-messages">
+            <div class="main">
 
-                    <% if (history != null && !history.isEmpty()) {
-                        java.time.LocalDate currentDate = null;
+                <h2>Chat con il paziente</h2>
+                <p>
+                    <strong><%= paz != null ? paz.getNome() + " " + paz.getCognome() : "Paziente"%></strong>
+                    — CF: <%= paz != null ? paz.getCf() : "N/D"%>
+                </p>
 
-                        for (ChatMessage m : history) {
-                            java.time.LocalDate d = m.getInviatoIl().toLocalDateTime().toLocalDate();
+                <div class="chat-card">
+                    <div class="chat-header">
+                        <h3 class="chat-title">Chat Sicura</h3>
+                        <p class="chat-description">Conversazione privata con il paziente</p>
+                    </div>
 
-                            if (currentDate == null || !currentDate.equals(d)) {
-                                currentDate = d; %>
-                                <div class="chat-date-sep"><%= d.toString() %></div>
-                    <%      }
+                    <div class="chat-content">
 
-                            boolean mine = (myUserId != null && m.getIdMittente() == myUserId);
-                            String sender = mine ? "Medico" : "Paziente";
-                            java.time.LocalTime t = m.getInviatoIl().toLocalDateTime().toLocalTime();
-                            String orario = String.format("%02d:%02d", t.getHour(), t.getMinute());
-                    %>
+                        <div id="chatMessages" class="chat-messages">
+                            <% if (history != null && !history.isEmpty()) {
+                                    java.time.LocalDate currentDate = null;
+                                    for (ChatMessage m : history) {
+                                        java.time.LocalDate d = m.getInviatoIl().toLocalDateTime().toLocalDate();
+                                        if (currentDate == null || !currentDate.equals(d)) {
+                                    currentDate = d;%>
+                            <div class="chat-date-sep"><%= d%></div>
+                            <%      }
 
-                    <div class="chat-msg-row <%= mine ? "mine" : "other" %>">
-                        <div>
-                            <span class="chat-sender"><%= sender %></span>:
-                            <span class="chat-text"><%= formatMessageJSP(m.getTesto()) %></span>
-                            <div class="chat-time"><%= orario %></div>
+                                boolean mine = (myUserId != null && m.getIdMittente() == myUserId);
+                                String sender = mine ? "Medico" : "Paziente";
+                                java.time.LocalTime t = m.getInviatoIl().toLocalDateTime().toLocalTime();
+                                String orario = String.format("%02d:%02d", t.getHour(), t.getMinute());
+                            %>
+
+                            <div class="chat-msg-row <%= mine ? "mine" : "other"%>">
+                                <div>
+                                    <span class="chat-sender"><%= sender%></span>:
+                                    <span class="chat-text"><%= formatMessageJSP(m.getTesto())%></span>
+                                    <div class="chat-time"><%= orario%></div>
+                                </div>
+                            </div>
+
+                            <% }
+                    } else { %>
+                            <div style="text-align:center; color:#666; margin-top:20px;">
+                                Nessun messaggio. Inizia la conversazione con il paziente.
+                            </div>
+                            <% }%>
+                        </div>
+
+                        <div class="chat-input-bar">
+                            <input id="chatInput" class="chat-input" placeholder="Scrivi un messaggio..." />
+
+                            <button class="send-btn" onclick="sendMessage()">
+                                💬 Invia
+                            </button>
+
+                            <!-- QUI LA MODIFICA IMPORTANTE -->
+                            <button class="video-btn" onclick="startOutgoingCall(<%= otherUserId%>)">
+                                📹 Avvia video
+                            </button>
                         </div>
                     </div>
 
-                    <% } } else { %>
-
-                    <div style="text-align:center; color:hsl(var(--muted-foreground)); margin-top:20px;">
-                        Nessun messaggio. Inizia la conversazione con il paziente.
-                    </div>
-
-                    <% } %>
-
                 </div>
-
-                <div class="chat-input-bar">
-                    <input id="chatInput" type="text" class="chat-input" placeholder="Scrivi un messaggio..." />
-
-                    <button class="send-btn" onclick="sendMessage()">💬 Invia</button>
-
-                    <button class="video-btn" onclick="startVideo()">📹 Avvia video</button>
-                </div>
-
             </div>
-
         </div>
 
-    </div>
-</div>
 
-<script>
-    const MY_ID = <%= myUserId != null ? myUserId : -1 %>;
+        <script>
+const MY_ID = <%= myUserId != null ? myUserId : -1 %>;
     const OTHER_ID = <%= otherUserId != null ? otherUserId : -1 %>;
     const ctx = "<%= ctx %>";
 
@@ -315,14 +362,17 @@
     input.addEventListener("keyup", e => {
         if (e.key === "Enter") sendMessage();
     });
-
-    function startVideo() {
-        alert("Videochiamata da integrare (WebRTC o piattaforma esterna).");
-    }
-
+    
     scrollBottom();
-</script>
+        </script>
 
-</body>
+        <!-- WEBRTC + CALL LISTENER (un solo WS) -->
+        <script src="<%= ctx%>/js/webrtc.js"></script>
+        <script>
+            initTelevisit(MY_ID, OTHER_ID);
+        </script>
+
+    </body>
 </html>
+
 

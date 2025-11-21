@@ -177,6 +177,13 @@ function updateChart(canvasId, field, days, btn) {
     btn.classList.add("active");
 }
 </script>
+<%@ include file="/WEB-INF/includes/video_window.jsp" %>
+
+<script src="<%= request.getContextPath() %>/js/webrtc.js"></script>
+<script>
+    const MY_ID = <%= session.getAttribute("id_utente") %>;
+    initTelevisit(MY_ID);
+</script>
 
 </body>
 </html>
