@@ -9,8 +9,8 @@ public class RiskEvaluator {
     public static final float SOGLIA_ALERT = 0.70f;
 
     public static String getLevel(float risk) {
-        if (risk < 0.33f) return "basso";
-        if (risk < 0.67f) return "moderato";
+        if (risk < 0.30f) return "basso";
+        if (risk < 0.69f) return "moderato";
         return "alto";
     }
 
@@ -19,8 +19,8 @@ public class RiskEvaluator {
     }
 
     public static String getCssClass(float risk) {
-        if (risk < 0.33f) return "risk-green";
-        if (risk < 0.67f) return "risk-yellow";
+        if (risk < 0.30f) return "risk-green";
+        if (risk < 0.69f) return "risk-yellow";
         return "risk-red";
     }
 }

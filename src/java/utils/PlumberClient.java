@@ -5,52 +5,60 @@
 package utils;
 
 import model.Parametri;
-// import java.io.*;
-// import java.net.*;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class PlumberClient {
 
-    // Versione dummy: calcola un rischio sintetico
-    public static float getRiskScore(Parametri p) {
-        double score = 0.2;
+    private static final String PLUMBER_URL = "http://localhost:8000/predict";
 
-        // piccolo esempio “realistico”:
-        score += Math.max(0, (p.getWeight7d() / 3.0));   // aumento peso
-        score += Math.max(0, (p.getHr7d() / 20.0));      // aumento HR
-        score += Math.max(0, (-p.getSpo27d() / 5.0));    // calo SpO2
-        score += Math.max(0, (-p.getSteps7d() / 8000.0));// calo attività
+    public static float getRiskScore(Parametri p) throws IOException {
 
-        if (score < 0) score = 0;
-        if (score > 1) score = 1;
+        // TODO: se il tuo endpoint Plumber si chiama in altro modo, cambia PLUMBER_URL
+        // TODO: se si aspetta un JSON diverso, qui va adattato il body
 
-        return (float) score;
-    }
+        // Costruisco un JSON minimo, puoi estenderlo con tutte le feature
+        String json = "{"
+                + "\"id_paz\":" + p.getIdPaz() + ","
+                + "\"hr_curr\":" + p.getHrCurr() + ","
+                + "\"rhr_curr\":" + p.getRhrCurr() + ","
+                + "\"hrv_rmssd_curr\":" + p.getHrvRmssdCurr() + ","
+                + "\"spo2_curr\":" + p.getSpo2Curr() + ","
+                + "\"resp_rate_curr\":" + p.getRespRateCurr() + ","
+                + "\"bioimp_curr\":" + p.getBioimpCurr() + ","
+                + "\"weight_curr\":" + p.getWeightCurr() + ","
+                + "\"steps_curr\":" + p.getStepsCurr()
+                // ... qui puoi aggiungere 7d e baseline se il modello li usa
+                + "}";
 
-    /*
-    // Versione futura con HTTP:
-    public static float getRiskScoreJSON(String jsonPayload) throws IOException {
-        URL url = new URL("http://localhost:8000/predict");
+        URL url = new URL(PLUMBER_URL);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setConnectTimeout(4000);
+        conn.setReadTimeout(4000);
         conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type","application/json; charset=UTF-8");
+        conn.setRequestProperty("Content-Type", "application/json");
         conn.setDoOutput(true);
 
         try (OutputStream os = conn.getOutputStream()) {
-            os.write(jsonPayload.getBytes("UTF-8"));
+            os.write(json.getBytes());
         }
 
         int code = conn.getResponseCode();
-        if (code != 200) throw new IOException("HTTP " + code);
+        if (code != 200) {
+            throw new IOException("HTTP Plumber " + code);
+        }
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(conn.getInputStream()))) {
             StringBuilder resp = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) resp.append(line);
+
+            // supponiamo che Plumber risponda { "risk": 0.78 }
             String body = resp.toString();
             String num = body.replaceAll("[^0-9\\.]", "");
             return Float.parseFloat(num);
         }
     }
-    */
 }
-

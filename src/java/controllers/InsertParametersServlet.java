@@ -8,6 +8,8 @@ import dao.ParametriDAO;
 import dao.RiskDAO;
 import dao.AlertDAO;
 import dao.PazienteDAO;
+import dao.DailyDAO;
+import dao.QuestionariDAO;
 
 import model.Parametri;
 import model.Risk;
@@ -24,6 +26,7 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @WebServlet("/api/insertParameters")
 public class InsertParametersServlet extends HttpServlet {
@@ -36,7 +39,7 @@ public class InsertParametersServlet extends HttpServlet {
             long idPaz = Long.parseLong(req.getParameter("id_paz"));
 
             Timestamp now = Timestamp.from(Instant.now());
-
+            LocalDate today = now.toLocalDateTime().toLocalDate();
             // ------------------------
             // 1) Costruzione Parametri
             // ------------------------
@@ -76,47 +79,50 @@ public class InsertParametersServlet extends HttpServlet {
             // ------------------------
             ParametriDAO.insert(p);
 
+            // 3) Segno che per oggi i parametri ci sono
+            DailyDAO.setParametriOk(idPaz, today);
+
+            resp.setContentType("application/json");
             // ------------------------
             // 3) Calcolo rischio ML
             // ------------------------
-            float riskScore = PlumberClient.getRiskScore(p);
 
-            // ------------------------
-            // 4) Salvataggio rischio
-            // ------------------------
-            Risk r = new Risk();
-            r.setIdPaz(idPaz);
-            r.setData(now);
-            r.setRiskScore(riskScore);
-            RiskDAO.insert(r);
+            // 4) Se per oggi ho anche il questionario e la predizione non è ancora fatta → faccio ML
+            if (DailyDAO.canPredict(idPaz, today)) {
 
-            // ------------------------
-            // 5) Creazione ALERT se necessario
-            // ------------------------
-            if (RiskEvaluator.isAlert(riskScore)) {
+                float riskScore = PlumberClient.getRiskScore(p);
 
-                // recupero il medico del paziente
-                Paziente paz = PazienteDAO.getByIdPaziente(idPaz);
-                if (paz != null) {
+                Risk r = new Risk();
+                r.setIdPaz(idPaz);
+                r.setData(now);
+                r.setRiskScore(riskScore);
+                RiskDAO.insert(r);
 
-                    Alert a = new Alert();
-                    a.setIdPaz(idPaz);
-                    a.setRiskData(r.getData());  // TIMESTAMP della predizione ML
-                    a.setIdMedico(paz.getIdMedico());
-                    a.setMessaggio("Rischio elevato: " + Math.round(riskScore * 100) + "%");
+                DailyDAO.markPredizioneFatta(idPaz, today);
 
-                    AlertDAO.insert(a);
+                // ALERT (come già facevi)
+                if (RiskEvaluator.isAlert(riskScore)) {
+                    Paziente paz = PazienteDAO.getByIdPaziente(idPaz);
+                    if (paz != null) {
+                        Alert a = new Alert();
+                        a.setIdPaz(idPaz);
+                        a.setRiskData(r.getData());
+                        a.setIdMedico(paz.getIdMedico());
+                        a.setMessaggio("Rischio elevato: " + Math.round(riskScore * 100) + "%");
+                        AlertDAO.insert(a);
+                    }
                 }
-            }
 
-            // ------------------------
-            // 6) Risposta JSON
-            // ------------------------
-            resp.setStatus(HttpServletResponse.SC_OK);
-            resp.setContentType("application/json");
-            resp.getWriter().write(
-                    "{\"status\":\"ok\",\"risk_score\":" + riskScore + "}"
-            );
+                resp.getWriter().write(
+                        "{\"status\":\"ok\",\"risk_score\":" + riskScore + "}"
+                );
+
+            } else {
+                // Questionario non ancora presente → NESSUNA predizione oggi
+                resp.getWriter().write(
+                        "{\"status\":\"pending_questionnaire\"}"
+                );
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

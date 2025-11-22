@@ -4,6 +4,20 @@
  */
 package controllers;
 
+import dao.ParametriDAO;
+import dao.RiskDAO;
+import dao.AlertDAO;
+import dao.PazienteDAO;
+import dao.DailyDAO;
+
+import model.Parametri;
+import model.Risk;
+import model.Alert;
+import model.Paziente;
+
+import utils.PlumberClient;
+import utils.RiskEvaluator;
+
 import dao.QuestionariDAO;
 import model.Questionario;
 
@@ -66,11 +80,47 @@ public class QuestionnaireServlet extends HttpServlet {
 
             QuestionariDAO.insert(q);
 
+            // segno che per oggi il questionario c'è
+            DailyDAO.setQuestionarioOk(idPaz, today);
+
+            try {
+                if (DailyDAO.canPredict(idPaz, today)) {
+
+                    // prendo l'ultimo set di parametri del paziente
+                    Parametri p = ParametriDAO.getLastByPatient(idPaz);
+                    if (p != null) {
+
+                        float riskScore = PlumberClient.getRiskScore(p);
+
+                        Risk r = new Risk();
+                        r.setIdPaz(idPaz);
+                        r.setData(p.getData());  // timestamp dei parametri
+                        r.setRiskScore(riskScore);
+                        RiskDAO.insert(r);
+
+                        DailyDAO.markPredizioneFatta(idPaz, today);
+
+                        if (RiskEvaluator.isAlert(riskScore)) {
+                            Paziente paz = PazienteDAO.getByIdPaziente(idPaz);
+                            if (paz != null) {
+                                Alert a = new Alert();
+                                a.setIdPaz(idPaz);
+                                a.setRiskData(r.getData());
+                                a.setIdMedico(paz.getIdMedico());
+                                a.setMessaggio("Rischio elevato: " + Math.round(riskScore * 100) + "%");
+                                AlertDAO.insert(a);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                // non blocchiamo il flusso del paziente per l'errore ML
+            }
             // ✅ Dopo salvataggio → vai in dashboard con flag di successo
             HttpSession session = req.getSession();
             session.setAttribute("questionnaire_ok", true);
             resp.sendRedirect(req.getContextPath() + "/patient/dashboard");
-
 
         } catch (Exception e) {
             throw new ServletException(e);
