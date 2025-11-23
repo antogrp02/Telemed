@@ -90,7 +90,7 @@ public class QuestionnaireServlet extends HttpServlet {
                     Parametri p = ParametriDAO.getLastByPatient(idPaz);
                     if (p != null) {
 
-                        float riskScore = PlumberClient.getRiskScore(p);
+                        float riskScore = PlumberClient.getRiskScore(p,q);
 
                         Risk r = new Risk();
                         r.setIdPaz(idPaz);

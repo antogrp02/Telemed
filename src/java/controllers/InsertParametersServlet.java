@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package controllers;
 
 import dao.ParametriDAO;
@@ -12,6 +8,7 @@ import dao.DailyDAO;
 import dao.QuestionariDAO;
 
 import model.Parametri;
+import model.Questionario;
 import model.Risk;
 import model.Alert;
 import model.Paziente;
@@ -35,11 +32,14 @@ public class InsertParametersServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
+        resp.setContentType("application/json");
+
         try {
             long idPaz = Long.parseLong(req.getParameter("id_paz"));
 
             Timestamp now = Timestamp.from(Instant.now());
             LocalDate today = now.toLocalDateTime().toLocalDate();
+
             // ------------------------
             // 1) Costruzione Parametri
             // ------------------------
@@ -79,55 +79,75 @@ public class InsertParametersServlet extends HttpServlet {
             // ------------------------
             ParametriDAO.insert(p);
 
-            // 3) Segno che per oggi i parametri ci sono
+            // ------------------------
+            // 3) Segno parametri_ok
+            // ------------------------
             DailyDAO.setParametriOk(idPaz, today);
 
-            resp.setContentType("application/json");
-            // ------------------------
-            // 3) Calcolo rischio ML
-            // ------------------------
-
-            // 4) Se per oggi ho anche il questionario e la predizione non è ancora fatta → faccio ML
-            if (DailyDAO.canPredict(idPaz, today)) {
-
-                float riskScore = PlumberClient.getRiskScore(p);
-
-                Risk r = new Risk();
-                r.setIdPaz(idPaz);
-                r.setData(now);
-                r.setRiskScore(riskScore);
-                RiskDAO.insert(r);
-
-                DailyDAO.markPredizioneFatta(idPaz, today);
-
-                // ALERT (come già facevi)
-                if (RiskEvaluator.isAlert(riskScore)) {
-                    Paziente paz = PazienteDAO.getByIdPaziente(idPaz);
-                    if (paz != null) {
-                        Alert a = new Alert();
-                        a.setIdPaz(idPaz);
-                        a.setRiskData(r.getData());
-                        a.setIdMedico(paz.getIdMedico());
-                        a.setMessaggio("Rischio elevato: " + Math.round(riskScore * 100) + "%");
-                        AlertDAO.insert(a);
-                    }
-                }
-
-                resp.getWriter().write(
-                        "{\"status\":\"ok\",\"risk_score\":" + riskScore + "}"
-                );
-
-            } else {
-                // Questionario non ancora presente → NESSUNA predizione oggi
-                resp.getWriter().write(
-                        "{\"status\":\"pending_questionnaire\"}"
-                );
+            // Se non ho ancora il questionario → STOP
+            if (!DailyDAO.canPredict(idPaz, today)) {
+                resp.getWriter().write("{\"status\":\"pending_questionnaire\"}");
+                return;
             }
+
+            // ------------------------
+            // 4) Recupero Questionario del giorno
+            // ------------------------
+            if (!QuestionariDAO.existsForDay(idPaz, today)) {
+                // per sicurezza: flag e tabella questionari non coerenti
+                resp.getWriter().write("{\"status\":\"pending_questionnaire\"}");
+                return;
+            }
+
+            // prendo l’ultimo questionario: dato il check sopra,
+            // l’ultimo è quello di oggi
+            Questionario q = QuestionariDAO.getLastByPaziente(idPaz);
+            if (q == null || !q.getData().toLocalDate().equals(today)) {
+                // caso anomalo, gestisco come mancanza questionario
+                resp.getWriter().write("{\"status\":\"pending_questionnaire\"}");
+                return;
+            }
+
+            // ------------------------
+            // 5) CHIAMATA AL MODELLO ML (Plumber)
+            // ------------------------
+            float riskScore = PlumberClient.getRiskScore(p, q);
+
+            // ------------------------
+            // 6) Salvo rischio
+            // ------------------------
+            Risk r = new Risk();
+            r.setIdPaz(idPaz);
+            r.setData(now);
+            r.setRiskScore(riskScore);
+            RiskDAO.insert(r);
+
+            DailyDAO.markPredizioneFatta(idPaz, today);
+
+            // ------------------------
+            // 7) ALERT SE NECESSARIO
+            // ------------------------
+            if (RiskEvaluator.isAlert(riskScore)) {
+                Paziente paz = PazienteDAO.getByIdPaziente(idPaz);
+                if (paz != null) {
+                    Alert a = new Alert();
+                    a.setIdPaz(idPaz);
+                    a.setRiskData(r.getData());
+                    a.setIdMedico(paz.getIdMedico());
+                    a.setMessaggio("Rischio elevato: " + Math.round(riskScore * 100) + "%");
+                    AlertDAO.insert(a);
+                }
+            }
+
+            // ------------------------
+            // 8) RISPOSTA
+            // ------------------------
+            resp.getWriter().write(
+                    "{\"status\":\"ok\",\"risk_score\":" + riskScore + "}"
+            );
 
         } catch (Exception e) {
             e.printStackTrace();
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.setContentType("application/json");
             resp.getWriter().write(
                     "{\"status\":\"error\",\"msg\":\"" + e.getMessage() + "\"}"
             );
