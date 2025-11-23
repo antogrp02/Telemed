@@ -6,6 +6,8 @@ package controllers;
 
 import dao.ParametriDAO;
 import dao.RiskDAO;
+import dao.QuestionariDAO;
+
 import model.Parametri;
 import model.Risk;
 
@@ -14,7 +16,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
+
 
 @WebServlet("/patient/dashboard")
 public class PatientDashboardServlet extends HttpServlet {
@@ -31,6 +35,8 @@ public class PatientDashboardServlet extends HttpServlet {
         }
 
         Long idPaz = (Long) s.getAttribute("id_paziente");
+              LocalDate today = LocalDate.now();
+
 
         if (idPaz == null) {
             req.setAttribute("error", "Errore: profilo paziente non trovato.");
@@ -44,10 +50,33 @@ public class PatientDashboardServlet extends HttpServlet {
 
             // 🔥 Storico rischio ultimi 7 giorni
             List<Risk> storicoRisk = RiskDAO.getLast7Days(idPaz);
-            req.setAttribute("storicoRisk", storicoRisk);
+            // ==========================
+            // 2) Logica "devi completare il questionario"
+            // ==========================
 
+            // true se l'ultimo record parametri è di oggi
+            boolean hasParamsToday = false;
+            if (lastParams != null && lastParams.getData() != null) {
+                LocalDate dataUltimiParametri =
+                        lastParams.getData().toLocalDateTime().toLocalDate();
+                hasParamsToday = dataUltimiParametri.equals(today);
+            }
+
+            // true se esiste già un questionario con data = oggi
+            boolean hasQuestionToday = QuestionariDAO.existsForDay(idPaz, today);
+
+            // vogliamo avvisare il paziente SOLO se:
+            // - parametri di oggi presenti
+            // - questionario di oggi NON presente
+            boolean mustCompleteQuestionnaire = hasParamsToday && !hasQuestionToday;
+
+            // ==========================
+            // 3) Metto tutto in request
+            // ==========================
             req.setAttribute("lastParams", lastParams);
             req.setAttribute("lastRisk", lastRisk);
+            req.setAttribute("storicoRisk", storicoRisk);
+            req.setAttribute("mustCompleteQuestionnaire", mustCompleteQuestionnaire);
 
             req.getRequestDispatcher("/patient_dashboard.jsp").forward(req, resp);
 

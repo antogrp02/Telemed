@@ -380,3 +380,42 @@ h2 {
     border: none;
     font-size: 14px;
 }
+
+.alert-reminder {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #fff4da;
+    border-left: 6px solid #ffb300;
+    padding: 16px 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+    opacity: 0;
+    transition: opacity 0.7s ease;
+}
+
+.alert-icon {
+    font-size: 28px;
+}
+
+.alert-text {
+    flex: 1;
+    font-size: 1.05em;
+    color: #6b4e00;
+    line-height: 1.3em;
+}
+
+.alert-btn {
+    background: #ffb300;
+    color: #000;
+    padding: 10px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.alert-btn:hover {
+    background: #ff9900;
+}
