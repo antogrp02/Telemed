@@ -10,7 +10,13 @@
 <%
     List<Paziente> pazienti = (List<Paziente>) request.getAttribute("pazienti");
     Map<Long, Risk> lastRiskByPaz = (Map<Long, Risk>) request.getAttribute("lastRiskByPaz");
+    Map<Long, Integer> unreadByPaz = (Map<Long, Integer>) request.getAttribute("unreadByPaz");
     String ctx = request.getContextPath();
+
+    int totalUnread = 0;
+    if (unreadByPaz != null)
+        for (int c : unreadByPaz.values())
+            totalUnread += c;
 %>
 
 <!DOCTYPE html>
@@ -21,6 +27,63 @@
         <link rel="stylesheet" href="<%= ctx%>/css/style.css">
 
         <style>
+            /* =============== NOTIFICHE ================================= */
+
+            #notifIcon {
+                cursor: pointer;
+                position: relative;
+                color: white;
+                margin-right: 25px;
+                font-size: 20px;
+            }
+
+            .notifBadge {
+                background: #2563eb;
+                color: white;
+                padding: 3px 8px;
+                border-radius: 999px;
+                font-size: 12px;
+                position: absolute;
+                top: -6px;
+                right: -10px;
+            }
+
+            #notifBox {
+                position: absolute;
+                top: 55px;
+                right: 20px;
+                width: 270px;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                box-shadow: 0px 4px 14px rgba(0,0,0,0.15);
+                display: none;
+                z-index: 500;
+            }
+
+            .notif-header {
+                padding: 10px;
+                font-weight: bold;
+                background: #f3f4f6;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .notif-item {
+                padding: 10px 12px;
+                cursor: pointer;
+                border-bottom: 1px solid #eee;
+            }
+
+            .notif-item:hover {
+                background: #f9fafb;
+            }
+
+            .notif-empty {
+                padding: 15px;
+                text-align: center;
+                color: #777;
+            }
+
             /* --- DROPDOWN RICERCA --- */
             #searchResults {
                 position: absolute;
@@ -89,6 +152,7 @@
                 background: #e5e7eb;
                 color: #475569;
             }
+
         </style>
     </head>
 
@@ -98,8 +162,38 @@
         <div class="topbar">
             <div class="logo">Heart Monitor</div>
             <div class="subtitle">Dashboard Medico</div>
+
             <div class="spacer"></div>
+
+            <!-- ICONA NOTIFICHE -->
+            <div id="notifIcon">
+                💬
+                <span id="notifBadge" class="notifBadge"><%= totalUnread%></span>
+            </div>
+
             <a href="<%= ctx%>/logout" class="toplink">Logout</a>
+        </div>
+
+        <!-- BOX DROPDOWN NOTIFICHE -->
+        <div id="notifBox">
+            <div class="notif-header">Nuovi messaggi</div>
+
+            <div id="notifList">
+                <% if (totalUnread == 0) { %>
+                <div class="notif-empty">Nessun nuovo messaggio</div>
+                <% } else {
+                    for (Paziente p : pazienti) {
+                        int unread = unreadByPaz != null ? unreadByPaz.getOrDefault(p.getIdPaz(), 0) : 0;
+                        if (unread > 0) {
+                %>
+                <div class="notif-item"
+                     onclick="location.href = '<%= ctx%>/doctor/chat?id=<%= p.getIdPaz()%>'">
+                    <%= p.getNome()%> <%= p.getCognome()%> — <%= unread%> messaggi
+                </div>
+                <% }
+                        }
+                    }%>
+            </div>
         </div>
 
         <div class="layout">
@@ -122,12 +216,11 @@
                                type="text"
                                placeholder="Cerca per nome, cognome o CF..."
                                style="padding:8px 12px; width:100%; border-radius:8px; border:1px solid #cbd5f5;">
-
                         <div id="searchResults"></div>
                     </div>
                 </div>
 
-                <!-- TABELLA PAZIENTI -->
+                <!-- TABELLA PAZIENTI (INVARIATA) -->
                 <table class="table">
                     <thead>
                         <tr>
@@ -138,22 +231,22 @@
                             <th style="text-align:right;">Azioni</th>
                         </tr>
                     </thead>
-                    <tbody>
 
+                    <tbody>
                         <%
                             if (pazienti != null && lastRiskByPaz != null) {
+                                if (pazienti.isEmpty()) { %>
 
-                                if (pazienti.isEmpty()) {
-                        %>
                         <tr>
                             <td colspan="5" style="text-align:center; padding:20px; color:#64748b;">
                                 Nessun paziente associato.
                             </td>
                         </tr>
-                        <%
-                            }
+
+                        <%  }
 
                             for (Paziente p : pazienti) {
+
                                 Risk r = lastRiskByPaz.get(p.getIdPaz());
                                 float score = (r != null ? r.getRiskScore() : 0f);
 
@@ -182,7 +275,6 @@
                                 <% } else { %>
                                 <span class="badge-none">Nessuno</span>
                                 <% }%>
-
                             </td>
 
                             <td style="text-align:right;">
@@ -195,73 +287,124 @@
 
                         <% }
                             }%>
-
                     </tbody>
                 </table>
+
             </div>
         </div>
 
-        <!-- SCRIPT RICERCA LIVE -->
+        <!-- SCRIPT NOTIFICHE DROPDOWN -->
+        <script>
+            const notifIcon = document.getElementById("notifIcon");
+            const notifBox = document.getElementById("notifBox");
+
+            notifIcon.addEventListener("click", () => {
+                notifBox.style.display = notifBox.style.display === "block" ? "none" : "block";
+            });
+
+            document.addEventListener("click", (event) => {
+                if (!notifIcon.contains(event.target) && !notifBox.contains(event.target)) {
+                    notifBox.style.display = "none";
+                }
+            });
+        </script>
+
+        <!-- SCRIPT RICERCA LIVE (INVARIATO) -->
         <script>
             const box = document.getElementById("searchBox");
             const resultsDiv = document.getElementById("searchResults");
-            const ctx = "<%= ctx%>";
+            const ctxPath = "<%= ctx%>";
 
-            // Evidenzia stringa cercata
-            function highlight(text, query) {
-                const regex = new RegExp("(" + query + ")", "gi");
-                return text.replace(regex, "<strong>$1</strong>");
+            function highlight(text, q) {
+                const r = new RegExp("(" + q + ")", "gi");
+                return text.replace(r, "<strong>$1</strong>");
             }
 
             box.addEventListener("input", () => {
                 const q = box.value.trim();
-
-                if (q.length === 0) {
+                if (!q) {
                     resultsDiv.style.display = "none";
                     return;
                 }
 
-                fetch(ctx + "/doctor/search?q=" + encodeURIComponent(q))
+                fetch(ctxPath + "/doctor/search?q=" + encodeURIComponent(q))
                         .then(r => r.json())
                         .then(data => {
-
                             if (!data || data.length === 0) {
                                 resultsDiv.innerHTML = "<div class='no-results'>Nessun risultato</div>";
                                 resultsDiv.style.display = "block";
                                 return;
                             }
 
-                            resultsDiv.innerHTML = data.map(p => {
-                                const nome = highlight(p.nome, q);
-                                const cognome = highlight(p.cognome, q);
-                                const cf = highlight(p.cf, q);
-
-                                return (
-                                        '<div class="result-item" onclick="location.href=\'' + ctx + '/doctor/patient?id=' + p.idPaz + '\'">' +
-                                        nome + ' ' + cognome +
-                                        ' <span style="color:#6b7280; font-size:12px;">(' + cf + ')</span>' +
-                                        '</div>'
-                                        );
-                            }).join("");
+                            resultsDiv.innerHTML = data.map(p =>
+                                '<div class="result-item" onclick="location.href=\'' + ctxPath +
+                                        '/doctor/patient?id=' + p.idPaz + '\'">' +
+                                        highlight(p.nome, q) + ' ' + highlight(p.cognome, q) +
+                                        ' <span style="color:#6b7280; font-size:12px;">(' + highlight(p.cf, q) +
+                                        ')</span></div>'
+                            ).join("");
 
                             resultsDiv.style.display = "block";
-                        })
-                        .catch(err => console.error("Errore fetch:", err));
+                        });
             });
 
-            document.addEventListener("click", (e) => {
-                if (!box.contains(e.target)) {
+            document.addEventListener("click", e => {
+                if (!box.contains(e.target))
                     resultsDiv.style.display = "none";
-                }
             });
         </script>
-        <%@ include file="/WEB-INF/includes/video_window.jsp" %>
 
-        <script src="<%= request.getContextPath()%>/js/webrtc.js"></script>
+        <!-- WEBSOCKET NOTIFICHE REALTIME -->
         <script>
             const MY_ID = <%= session.getAttribute("id_utente")%>;
-            initTelevisit(MY_ID);
+            const wsProto = location.protocol === "https:" ? "wss://" : "ws://";
+            const wsUrl = wsProto + location.host + "<%= ctx%>/ws/chat/" + MY_ID;
+
+            let ws = new WebSocket(wsUrl);
+
+            ws.onmessage = (ev) => {
+                const msg = JSON.parse(ev.data);
+
+                if (msg.mine === false) {
+
+                    const badge = document.getElementById("notifBadge");
+                    const list = document.getElementById("notifList");
+
+                    let num = parseInt(badge.textContent) + 1;
+                    badge.textContent = num;
+
+                    const empty = document.querySelector(".notif-empty");
+                    if (empty)
+                        empty.remove();
+
+                    const existing = document.getElementById("notif-item-" + msg.pazienteId);
+
+                    if (existing) {
+                        let c = parseInt(existing.dataset.count) + 1;
+                        existing.dataset.count = c;
+                        existing.innerHTML = existing.dataset.name + " — " + c + " messaggi";
+                    } else {
+                        const item = document.createElement("div");
+                        item.className = "notif-item";
+                        item.id = "notif-item-" + msg.pazienteId;
+                        item.dataset.count = 1;
+                        item.dataset.name = "Paziente";
+
+                        item.innerHTML = "Nuovo messaggio da paziente (1)";
+
+                        item.onclick = () =>
+                            location.href = "<%= ctx%>/doctor/chat?id=" + msg.pazienteId;
+
+                        list.appendChild(item);
+                    }
+                }
+            };
+
         </script>
+
+        <%@ include file="/WEB-INF/includes/video_window.jsp" %>
+        <script src="<%= ctx%>/js/webrtc.js"></script>
+        <script> initTelevisit(MY_ID);</script>
+
     </body>
 </html>
-

@@ -36,8 +36,8 @@
     <head>
         <title>Heart Monitor - Chat Medico</title>
         <link rel="stylesheet" href="<%= ctx%>/css/style.css">
-        
-                <style>
+
+        <style>
             :root {
                 --background: 0 0% 100%;
                 --foreground: 222.2 84% 4.9%;
@@ -238,7 +238,7 @@
                                     for (ChatMessage m : history) {
                                         java.time.LocalDate d = m.getInviatoIl().toLocalDateTime().toLocalDate();
                                         if (currentDate == null || !currentDate.equals(d)) {
-                                    currentDate = d;%>
+                                            currentDate = d;%>
                             <div class="chat-date-sep"><%= d%></div>
                             <%      }
 
@@ -257,7 +257,7 @@
                             </div>
 
                             <% }
-                    } else { %>
+                            } else { %>
                             <div style="text-align:center; color:#666; margin-top:20px;">
                                 Nessun messaggio. Inizia la conversazione con il paziente.
                             </div>
@@ -284,9 +284,9 @@
 
 
         <script>
-const MY_ID = <%= myUserId != null ? myUserId : -1 %>;
-    const OTHER_ID = <%= otherUserId != null ? otherUserId : -1 %>;
-    const ctx = "<%= ctx %>";
+    const MY_ID = <%= myUserId != null ? myUserId : -1%>;
+    const OTHER_ID = <%= otherUserId != null ? otherUserId : -1%>;
+    const ctx = "<%= ctx%>";
 
     const proto = location.protocol === "https:" ? "wss://" : "ws://";
     const wsUrl = proto + location.host + ctx + "/ws/chat/" + MY_ID;
@@ -296,19 +296,56 @@ const MY_ID = <%= myUserId != null ? myUserId : -1 %>;
 
     let ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => scrollBottom();
-    ws.onmessage = (ev) => appendMessage(JSON.parse(ev.data));
+    // ---------------------------
+    // ON OPEN → Dichiarare la chat aperta
+    // ---------------------------
+    ws.onopen = () => {
+        scrollBottom();
+
+        // COMUNICHIAMO AL SERVER QUALE CHAT È APERTA
+        ws.send(JSON.stringify({
+            type: "ENTER_CHAT",
+            otherUserId: OTHER_ID
+        }));
+    };
+
+    // ---------------------------
+    // ON MESSAGE → Gestione messaggi + READ_CONFIRM
+    // ---------------------------
+    ws.onmessage = (ev) => {
+        const msg = JSON.parse(ev.data);
+
+        // Evento: nuovo messaggio
+        if (msg.text !== undefined) {
+            appendMessage(msg);
+            return;
+        }
+
+        // Evento: READ_CONFIRM
+        if (msg.type === "READ_CONFIRM") {
+            // Aggiorno badge o notifiche (puoi personalizzarlo)
+            console.log("Messaggi del paziente segnati come letti.");
+
+            // Se vuoi aggiornare la dashboard subito:
+            // parent.postMessage({updateNotifications: true}, "*");
+        }
+    };
+
     ws.onerror = (e) => console.error("WebSocket error:", e);
 
+
+    // ---------------------------
+    // UTILS
+    // ---------------------------
     function scrollBottom() {
         chatDiv.scrollTop = chatDiv.scrollHeight;
     }
 
     function formatMessage(text) {
         text = text.replace(/&/g, "&amp;")
-                   .replace(/</g, "&lt;")
-                   .replace(/>/g, "&gt;")
-                   .replace(/"/g, "&quot;");
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
 
         const urlRegex = /(https?:\/\/[\w\-._~:\/?#\[\]@!$&'()*+,;=%]+)/g;
         return text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
@@ -334,8 +371,10 @@ const MY_ID = <%= myUserId != null ? myUserId : -1 %>;
 
         try {
             const d = new Date(msg.sentAt);
-            time.textContent = d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
-        } catch (e) { time.textContent = ""; }
+            time.textContent = d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+        } catch (e) {
+            time.textContent = "";
+        }
 
         box.appendChild(senderSpan);
         box.appendChild(document.createTextNode(": "));
@@ -349,7 +388,8 @@ const MY_ID = <%= myUserId != null ? myUserId : -1 %>;
 
     function sendMessage() {
         const text = input.value.trim();
-        if (!text || ws.readyState !== WebSocket.OPEN) return;
+        if (!text || ws.readyState !== WebSocket.OPEN)
+            return;
 
         ws.send(JSON.stringify({
             destId: OTHER_ID,
@@ -360,16 +400,18 @@ const MY_ID = <%= myUserId != null ? myUserId : -1 %>;
     }
 
     input.addEventListener("keyup", e => {
-        if (e.key === "Enter") sendMessage();
+        if (e.key === "Enter")
+            sendMessage();
     });
-    
+
     scrollBottom();
         </script>
+
 
         <!-- WEBRTC + CALL LISTENER (un solo WS) -->
         <script src="<%= ctx%>/js/webrtc.js"></script>
         <script>
-            initTelevisit(MY_ID, OTHER_ID);
+    initTelevisit(MY_ID, OTHER_ID);
         </script>
 
     </body>

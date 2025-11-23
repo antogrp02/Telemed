@@ -1,12 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package controllers;
 
 import dao.PazienteDAO;
 import dao.RiskDAO;
 import dao.AlertDAO;
+import dao.ChatMessageDAO;
 
 import model.Paziente;
 import model.Risk;
@@ -59,10 +56,22 @@ public class DoctorDashboardServlet extends HttpServlet {
                 hasAlert.put(p.getIdPaz(), active);
             }
 
-            // 5) Passo alla JSP
+            // 5) Messaggi non letti: mappa (idUtentePaziente → numeroNonLetti)
+            Map<Long, Integer> unreadByUser = ChatMessageDAO.getUnreadMessagesByPatient(idMedico);
+
+            // Conversione a: idPaziente → nonLetti
+            Map<Long, Integer> unreadByPaz = new HashMap<>();
+            for (Paziente p : pazienti) {
+                long userId = p.getIdUtente();
+                int count = unreadByUser.getOrDefault(userId, 0);
+                unreadByPaz.put(p.getIdPaz(), count);
+            }
+
+            // 6) Passo tutto alla JSP
             req.setAttribute("pazienti", pazienti);
             req.setAttribute("lastRiskByPaz", lastRiskByPaz);
             req.setAttribute("hasAlert", hasAlert);
+            req.setAttribute("unreadByPaz", unreadByPaz);
 
             req.getRequestDispatcher("/doctor_dashboard.jsp").forward(req, resp);
 

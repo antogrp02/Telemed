@@ -7,11 +7,21 @@ package model;
 import java.sql.Timestamp;
 
 public class ChatMessage {
+
     private long idMsg;
     private long idMittente;
     private long idDestinatario;
     private Timestamp inviatoIl;
     private String testo;
+    private boolean letto;
+
+    public boolean isLetto() {
+        return letto;
+    }
+
+    public void setLetto(boolean letto) {
+        this.letto = letto;
+    }
 
     public long getIdMsg() {
         return idMsg;

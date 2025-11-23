@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package controllers;
 
 import dao.ChatMessageDAO;
@@ -22,8 +18,11 @@ public class DoctorChatServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
 
+        // -----------------------------
+        // 1) Controllo sessione
+        // -----------------------------
         HttpSession s = req.getSession(false);
         if (s == null || s.getAttribute("role") == null || (int) s.getAttribute("role") != 1) {
             resp.sendRedirect(req.getContextPath() + "/login");
@@ -48,6 +47,9 @@ public class DoctorChatServlet extends HttpServlet {
         }
 
         try {
+            // -----------------------------
+            // 2) Carico paziente e medico
+            // -----------------------------
             Paziente paz = PazienteDAO.getByIdPaziente(idPaziente);
             Medico med = MedicoDAO.getByIdMedico(idMedico);
 
@@ -58,8 +60,19 @@ public class DoctorChatServlet extends HttpServlet {
 
             long otherUserId = paz.getIdUtente();
 
+            // -----------------------------
+            // 3) Segno come LETTI i messaggi non letti paziente → medico
+            // -----------------------------
+            ChatMessageDAO.segnaComeLetti(otherUserId, idUtente);
+
+            // -----------------------------
+            // 4) Carico cronologia chat aggiornata
+            // -----------------------------
             List<ChatMessage> history = ChatMessageDAO.getHistory(idUtente, otherUserId);
 
+            // -----------------------------
+            // 5) Passo dati alla JSP
+            // -----------------------------
             req.setAttribute("history", history);
             req.setAttribute("myUserId", idUtente);
             req.setAttribute("otherUserId", otherUserId);
