@@ -51,7 +51,7 @@ public class RiskDAO {
             SELECT data, risk_score
             FROM risk
             WHERE id_paz = ?
-            AND data >= NOW() - INTERVAL '7 days'
+            AND data >= NOW() - INTERVAL '29 days'
             ORDER BY data ASC
         """;
 

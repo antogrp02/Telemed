@@ -29,9 +29,9 @@ public class ParametriDAO {
             "INSERT INTO parametri (" +
             "id_paz, data, " +
             "hr_curr, rhr_curr, hrv_rmssd_curr, spo2_curr, resp_rate_curr, bioimp_curr, weight_curr, steps_curr, " +
-            "hr_7d, rhr_7d, hrv_rmssd_7d, spo2_7d, resp_rate_7d, biomip_7d, weight_7d, steps_7d, " +
+            "hr_7d, rhr_7d, hrv_rmssd_7d, spo2_7d, resp_rate_7d, bioimp_7d, weight_7d, steps_7d, " +
             "hr_bs, rhr_bs, hrv_rmssd_bs, spo2_bs, resp_rate_bs, bioimp_bs, weight_bs, steps_bs" +
-            ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -88,7 +88,7 @@ public class ParametriDAO {
         p.setHrvRmssd7d(rs.getDouble("hrv_rmssd_7d"));
         p.setSpo27d(rs.getDouble("spo2_7d"));
         p.setRespRate7d(rs.getDouble("resp_rate_7d"));
-        p.setBioimp7d(rs.getDouble("biomip_7d"));
+        p.setBioimp7d(rs.getDouble("bioimp_7d"));
         p.setWeight7d(rs.getDouble("weight_7d"));
         p.setSteps7d(rs.getDouble("steps_7d"));
 

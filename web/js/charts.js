@@ -1,12 +1,13 @@
-/* 
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/JavaScript.js to edit this template
- */
-
 /* --- FUNZIONI COMUNI --- */
 
 function normalizeDate(d) {
-    return new Date(d).toISOString().substring(0, 10);
+    const date = new Date(d);
+
+    const year  = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day   = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
 }
 
 function dateRange(days) {
@@ -22,7 +23,10 @@ function dateRange(days) {
 
 function mapDataset(raw) {
     const map = {};
-    raw.forEach(r => map[normalizeDate(r.data)] = r);
+    raw.forEach(r => {
+        const key = normalizeDate(r.data);
+        map[key] = r;
+    });
     return map;
 }
 
@@ -32,7 +36,8 @@ function buildSeries(mapped, field, days) {
     return { labels: dates, data: vals };
 }
 
-/* ---- TEMPLATE GRAFICO STILE RISK ---- */
+
+/* ---- TEMPLATE GRAFICO ---- */
 function makeLineChart(canvasId, labels, data, color) {
 
     return new Chart(document.getElementById(canvasId), {
@@ -51,12 +56,7 @@ function makeLineChart(canvasId, labels, data, color) {
             }]
         },
         options: {
-
-            interaction: {
-                mode: "nearest",
-                intersect: true
-            },
-
+            interaction: { mode: "nearest", intersect: true },
             plugins: {
                 legend: { display: false },
                 tooltip: {
@@ -69,27 +69,21 @@ function makeLineChart(canvasId, labels, data, color) {
                     }
                 }
             },
-
-            elements: {
-                point: {
-                    hitRadius: 15
-                }
-            },
-
+            elements: { point: { hitRadius: 15 }},
             scales: {
-                x: { ticks: { maxRotation: 0 } },
+                x: { ticks: { maxRotation: 0 }},
                 y: { beginAtZero: false }
             }
         }
     });
 }
 
-/* --- INIZIALIZZAZIONE PARAMETRI --- */
+
+/* --- GRAFICI PARAMETRI --- */
 
 function initMetricChart(canvasId, raw, field, color) {
     const mapped = mapDataset(raw);
     const initial = buildSeries(mapped, field, 7);
-
     return makeLineChart(canvasId, initial.labels, initial.data, color);
 }
 
@@ -101,67 +95,15 @@ function updateMetricChart(chart, raw, field, days) {
     chart.update();
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const canvas = document.getElementById("riskChart");
-    if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+/* --- GRAFICO RISCHIO DASHBOARD --- */
 
-    // Lista rischi dal backend
-    const dataList = riskData || [];
+document.addEventListener("DOMContentLoaded", () => {
+    if (!Array.isArray(riskData)) return; // ✅ NON bloccare array vuoto
 
-    const today = new Date();
+    const mapped = mapDataset(riskData);  // ✅ se vuoto → mapped = {}
+    const series = buildSeries(mapped, "riskScore", 7); // ✅ genera 7 null
 
-    const labels = [];
-    const values = [];
-
-    // Funzione per ricavare YYYY-MM-DD da qualsiasi formato
-    function normalizeDate(str) {
-        try {
-            let d = new Date(str);
-            if (!isNaN(d)) {
-                return d.toISOString().substring(0, 10);
-            }
-        } catch (e) {
-            console.log("Bad date:", str);
-        }
-        return null;
-    }
-
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-
-        const strDay = d.toISOString().substring(0, 10);
-
-        labels.push(strDay);
-
-        // Cerca corrispondenza ignorando formato
-        const entry = dataList.find(r => normalizeDate(r.data) === strDay);
-
-        values.push(entry ? entry.riskScore : null);
-    }
-
-    new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "Rischio HF",
-                data: values,
-                borderWidth: 2,
-                borderColor: "#e11d48",
-                tension: 0.3,
-                pointRadius: 3,
-                spanGaps: false
-            }]
-        },
-        options: {
-            scales: {
-                y: { min: 0, max: 1 }
-            }
-        }
-    });
+    makeLineChart("riskChart", series.labels, series.data, "#e11d48");
 });
-
 

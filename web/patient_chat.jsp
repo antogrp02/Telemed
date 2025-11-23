@@ -209,7 +209,7 @@
             <div class="sidebar">
                 <a href="<%= ctx%>/patient/dashboard">Dashboard</a>
                 <a href="<%= ctx%>/patient/questionnaire">Questionario</a>
-                <a href="<%= ctx%>/patient/metrics">Storico & Grafici</a>
+                <a href="<%= ctx%>/patient/metrics">Storico Parametri</a>
                 <a href="<%= ctx%>/patient/chat" class="active">Chat & Televisita</a>
             </div>
 

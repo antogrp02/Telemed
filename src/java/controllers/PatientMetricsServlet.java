@@ -37,18 +37,24 @@ public class PatientMetricsServlet extends HttpServlet {
         if (daysParam != null) {
             try {
                 days = Integer.parseInt(daysParam);
-            } catch (NumberFormatException ignore) {}
+            } catch (NumberFormatException ignore) {
+            }
         }
 
         try {
             List<Parametri> storico = ParametriDAO.getLastDays(idPaz, days);
 
-            // DEBUG (ti aiuta a capire cosa arriva)
-            System.out.println("⚠️ Parametri trovati = " + storico.size());
-
-            // CONVERSIONE JSON → indispensabile per Chart.js
             String json = new Gson().toJson(storico);
 
+            // ✅ Se è richiesta AJAX → restituisci solo JSON
+            String requestedWith = req.getHeader("X-Requested-With");
+            if (requestedWith != null && requestedWith.equalsIgnoreCase("XMLHttpRequest")) {
+                resp.setContentType("application/json; charset=UTF-8");
+                resp.getWriter().write(json);
+                return;
+            }
+
+            // ✅ Altrimenti render JSP (prima apertura pagina)
             req.setAttribute("jsonData", json);
             req.setAttribute("days", days);
 
@@ -59,4 +65,3 @@ public class PatientMetricsServlet extends HttpServlet {
         }
     }
 }
-
