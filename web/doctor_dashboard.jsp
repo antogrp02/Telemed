@@ -52,7 +52,7 @@
                 position: absolute;
                 top: 55px;
                 right: 20px;
-                width: 270px;
+                width: 290px;
                 background: white;
                 border: 1px solid #ddd;
                 border-radius: 10px;
@@ -108,17 +108,8 @@
             .result-item:hover {
                 background: #f8fafc;
             }
-            .result-item:last-child {
-                border-bottom: none;
-            }
-            .no-results {
-                padding: 10px;
-                text-align: center;
-                color: #64748b;
-                font-size: 14px;
-            }
 
-            /* --- PULSANTE APRI SCHEDA --- */
+            /* --- BOTTONI --- */
             .btn-primary-sm {
                 padding: 6px 12px;
                 border-radius: 999px;
@@ -129,14 +120,10 @@
                 font-size: 13px;
                 font-weight: 500;
             }
-            .btn-primary-sm:hover {
-                filter: brightness(1.05);
-            }
 
             /* --- BADGE ALERT --- */
             .badge-alert {
                 display: inline-flex;
-                align-items: center;
                 padding: 4px 8px;
                 border-radius: 999px;
                 font-size: 12px;
@@ -145,14 +132,12 @@
             }
             .badge-none {
                 display: inline-flex;
-                align-items: center;
                 padding: 4px 8px;
                 border-radius: 999px;
                 font-size: 12px;
                 background: #e5e7eb;
                 color: #475569;
             }
-
         </style>
     </head>
 
@@ -187,12 +172,17 @@
                         if (unread > 0) {
                 %>
                 <div class="notif-item"
+                     id="notif-item-<%= p.getIdPaz()%>"
+                     data-count="<%= unread%>"
+                     data-name="<%= p.getNome() + " " + p.getCognome()%>"
                      onclick="location.href = '<%= ctx%>/doctor/chat?id=<%= p.getIdPaz()%>'">
+
                     <%= p.getNome()%> <%= p.getCognome()%> — <%= unread%> messaggi
                 </div>
+
                 <% }
-                        }
-                    }%>
+                }
+            }%>
             </div>
         </div>
 
@@ -220,7 +210,7 @@
                     </div>
                 </div>
 
-                <!-- TABELLA PAZIENTI (INVARIATA) -->
+                <!-- TABELLA PAZIENTI -->
                 <table class="table">
                     <thead>
                         <tr>
@@ -235,15 +225,16 @@
                     <tbody>
                         <%
                             if (pazienti != null && lastRiskByPaz != null) {
-                                if (pazienti.isEmpty()) { %>
 
+                                if (pazienti.isEmpty()) {
+                        %>
                         <tr>
                             <td colspan="5" style="text-align:center; padding:20px; color:#64748b;">
                                 Nessun paziente associato.
                             </td>
                         </tr>
 
-                        <%  }
+                        <% }
 
                             for (Paziente p : pazienti) {
 
@@ -286,14 +277,14 @@
                         </tr>
 
                         <% }
-                            }%>
+                }%>
                     </tbody>
                 </table>
 
             </div>
         </div>
 
-        <!-- SCRIPT NOTIFICHE DROPDOWN -->
+        <!-- SCRIPT NOTIFICHE -->
         <script>
             const notifIcon = document.getElementById("notifIcon");
             const notifBox = document.getElementById("notifBox");
@@ -309,7 +300,7 @@
             });
         </script>
 
-        <!-- SCRIPT RICERCA LIVE (INVARIATO) -->
+        <!-- SCRIPT RICERCA -->
         <script>
             const box = document.getElementById("searchBox");
             const resultsDiv = document.getElementById("searchResults");
@@ -356,50 +347,61 @@
 
         <!-- WEBSOCKET NOTIFICHE REALTIME -->
         <script>
-            const MY_ID = <%= session.getAttribute("id_utente")%>;
-            const wsProto = location.protocol === "https:" ? "wss://" : "ws://";
-            const wsUrl = wsProto + location.host + "<%= ctx%>/ws/chat/" + MY_ID;
+    const MY_ID = <%= session.getAttribute("id_utente")%>;
 
-            let ws = new WebSocket(wsUrl);
+    const wsProto = location.protocol === "https:" ? "wss://" : "ws://";
+    const wsUrl = wsProto + location.host + "<%= ctx%>/ws/chat/" + MY_ID;
 
-            ws.onmessage = (ev) => {
-                const msg = JSON.parse(ev.data);
+    let ws = new WebSocket(wsUrl);
 
-                if (msg.mine === false) {
+    ws.onmessage = (ev) => {
+        const msg = JSON.parse(ev.data);
 
-                    const badge = document.getElementById("notifBadge");
-                    const list = document.getElementById("notifList");
+        // Solo messaggi ricevuti da pazienti reali
+        if (!msg.mine && msg.pazienteId > 0) {
 
-                    let num = parseInt(badge.textContent) + 1;
-                    badge.textContent = num;
+            const badge = document.getElementById("notifBadge");
+            const list = document.getElementById("notifList");
 
-                    const empty = document.querySelector(".notif-empty");
-                    if (empty)
-                        empty.remove();
+            // aggiorno badge
+            let num = parseInt(badge.textContent) || 0;
+            badge.textContent = num + 1;
 
-                    const existing = document.getElementById("notif-item-" + msg.pazienteId);
+            // rimuovo placeholder "nessun messaggio"
+            const empty = document.querySelector(".notif-empty");
+            if (empty)
+                empty.remove();
 
-                    if (existing) {
-                        let c = parseInt(existing.dataset.count) + 1;
-                        existing.dataset.count = c;
-                        existing.innerHTML = existing.dataset.name + " — " + c + " messaggi";
-                    } else {
-                        const item = document.createElement("div");
-                        item.className = "notif-item";
-                        item.id = "notif-item-" + msg.pazienteId;
-                        item.dataset.count = 1;
-                        item.dataset.name = "Paziente";
+            // controllo se il paziente ha già una riga
+            const existing = document.getElementById("notif-item-" + msg.pazienteId);
 
-                        item.innerHTML = "Nuovo messaggio da paziente (1)";
+            if (existing) {
+                let c = parseInt(existing.dataset.count) || 0;
+                c++;
+                existing.dataset.count = c;
 
-                        item.onclick = () =>
-                            location.href = "<%= ctx%>/doctor/chat?id=" + msg.pazienteId;
+                const fullName = existing.dataset.name;
+                existing.innerHTML = fullName + " — " + c + " messaggi";
 
-                        list.appendChild(item);
-                    }
-                }
-            };
+            } else {
+                // creo nuova riga
+                const item = document.createElement("div");
+                item.className = "notif-item";
+                item.id = "notif-item-" + msg.pazienteId;
 
+                const fullName = (msg.pazienteNome || "Paziente") + " " +
+                        (msg.pazienteCognome || "");
+
+                item.dataset.name = fullName;
+                item.dataset.count = 1;
+                item.innerHTML = fullName + " — 1 messaggio";
+
+                item.onclick = () => location.href = "<%= ctx%>/doctor/chat?id=" + msg.pazienteId;
+
+                list.appendChild(item);
+            }
+        }
+    };
         </script>
 
         <%@ include file="/WEB-INF/includes/video_window.jsp" %>

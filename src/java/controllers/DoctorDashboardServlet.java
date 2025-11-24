@@ -10,10 +10,15 @@ import model.Risk;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @WebServlet("/doctor/dashboard")
 public class DoctorDashboardServlet extends HttpServlet {
@@ -30,15 +35,16 @@ public class DoctorDashboardServlet extends HttpServlet {
             return;
         }
 
-        Long idMedico = (Long) s.getAttribute("id_medico");
-        if (idMedico == null) {
+        Long idMedico = (Long) s.getAttribute("id_medico");   // PK medico
+        Long idUtente = (Long) s.getAttribute("id_utente");   // id_utente del medico
+
+        if (idMedico == null || idUtente == null) {
             req.setAttribute("error", "Errore profilo medico non trovato.");
             req.getRequestDispatcher("/login.jsp").forward(req, resp);
             return;
         }
 
         try {
-
             // 2) Pazienti associati al medico
             List<Paziente> pazienti = PazienteDAO.getByIdMedico(idMedico);
 
@@ -56,14 +62,15 @@ public class DoctorDashboardServlet extends HttpServlet {
                 hasAlert.put(p.getIdPaz(), active);
             }
 
-            // 5) Messaggi non letti: mappa (idUtentePaziente → numeroNonLetti)
-            Map<Long, Integer> unreadByUser = ChatMessageDAO.getUnreadMessagesByPatient(idMedico);
+            // 5) Messaggi non letti:
+            //    prima mappa (idUtentePaziente → numeroNonLetti) sulla base di id_utente medico
+            Map<Long, Integer> unreadByUser = ChatMessageDAO.getUnreadMessagesByPatient(idUtente);
 
-            // Conversione a: idPaziente → nonLetti
+            //    poi converto a: idPaziente → numeroNonLetti
             Map<Long, Integer> unreadByPaz = new HashMap<>();
             for (Paziente p : pazienti) {
-                long userId = p.getIdUtente();
-                int count = unreadByUser.getOrDefault(userId, 0);
+                long userIdPaziente = p.getIdUtente();
+                int count = unreadByUser.getOrDefault(userIdPaziente, 0);
                 unreadByPaz.put(p.getIdPaz(), count);
             }
 
