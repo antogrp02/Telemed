@@ -93,7 +93,7 @@
 
                         <div class="chat-input-bar">
                             <input id="chatInput" type="text" class="chat-input" placeholder="Scrivi un messaggio..." />
-                            <button type="button" class="send-btn" onclick="sendMessage()">
+                            <button type="button" id="sendButton" class="send-btn">
                                 💬 Invia
                             </button>
                             <button type="button" class="video-btn" onclick="startOutgoingCall(<%= otherUserId %>)">
@@ -108,101 +108,21 @@
         <!-- ======= FINESTRA VIDEO GLOBALE (INCLUSA) ======= -->
         <%@ include file="/WEB-INF/includes/video_window.jsp" %>
 
+        <script src="<%= ctx%>/js/chat.js"></script>
         <script>
             const MY_ID = <%= myUserId != null ? myUserId : -1%>;
             const OTHER_ID = <%= otherUserId != null ? otherUserId : -1%>;
-            const ctx = "<%= ctx%>";
 
-            const proto = (location.protocol === "https:") ? "wss://" : "ws://";
-            const wsUrl = proto + location.host + ctx + "/ws/chat/" + MY_ID;
-
-            const chatDiv = document.getElementById("chatMessages");
-            const input = document.getElementById("chatInput");
-
-            let ws = new WebSocket(wsUrl);
-
-            ws.onopen = () => {
-                scrollBottom();
-            };
-
-            ws.onmessage = (event) => {
-                const msg = JSON.parse(event.data);
-                appendMessage(msg);
-            };
-
-            ws.onerror = (e) => {
-                console.error("WS error", e);
-            };
-
-            function scrollBottom() {
-                chatDiv.scrollTop = chatDiv.scrollHeight;
-            }
-
-            function formatMessage(text) {
-                text = text.replace(/&/g, "&amp;")
-                           .replace(/</g, "&lt;")
-                           .replace(/>/g, "&gt;")
-                           .replace(/"/g, "&quot;");
-                const urlRegex = /(https?:\/\/[\w\-._~:\/?#\[\]@!$&'()*+,;=%]+)/g;
-                text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-                return text;
-            }
-
-            function appendMessage(msg) {
-                const wrapper = document.createElement("div");
-                wrapper.className = "chat-msg-row " + (msg.mine ? "mine" : "other");
-
-                const sender = msg.mine ? "Paziente" : "Medico";
-
-                const box = document.createElement("div");
-
-                const senderSpan = document.createElement("span");
-                senderSpan.className = "chat-sender";
-                senderSpan.textContent = sender;
-
-                const colon = document.createTextNode(": ");
-
-                const textSpan = document.createElement("span");
-                textSpan.className = "chat-text";
-                textSpan.innerHTML = formatMessage(msg.text);
-
-                const time = document.createElement("div");
-                time.className = "chat-time";
-
-                try {
-                    const d = new Date(msg.sentAt);
-                    const h = String(d.getHours()).padStart(2, "0");
-                    const m = String(d.getMinutes()).padStart(2, "0");
-                    time.textContent = h + ":" + m;
-                } catch (e) {
-                    time.textContent = "";
-                }
-
-                box.appendChild(senderSpan);
-                box.appendChild(colon);
-                box.appendChild(textSpan);
-                box.appendChild(time);
-                wrapper.appendChild(box);
-
-                chatDiv.appendChild(wrapper);
-                scrollBottom();
-            }
-
-            function sendMessage() {
-                const text = input.value.trim();
-                if (!text || ws.readyState !== WebSocket.OPEN)
-                    return;
-
-                ws.send(JSON.stringify({
-                    destId: OTHER_ID,
-                    text: text
-                }));
-                input.value = "";
-            }
-
-            input.addEventListener("keyup", (e) => {
-                if (e.key === "Enter")
-                    sendMessage();
+            initChat({
+                myId: MY_ID,
+                otherId: OTHER_ID,
+                contextPath: "<%= ctx%>",
+                chatContainerSelector: "#chatMessages",
+                inputSelector: "#chatInput",
+                sendButtonSelector: "#sendButton",
+                mineLabel: "Paziente",
+                otherLabel: "Medico",
+                enterChatOnOpen: false
             });
         </script>
 

@@ -97,7 +97,7 @@
                         <div class="chat-input-bar">
                             <input id="chatInput" class="chat-input" placeholder="Scrivi un messaggio..." />
 
-                            <button class="send-btn" onclick="sendMessage()">
+                            <button id="sendButton" class="send-btn">
                                 💬 Invia
                             </button>
 
@@ -113,135 +113,27 @@
         </div>
 
 
+        <script src="<%= ctx%>/js/chat.js"></script>
         <script>
-    const MY_ID = <%= myUserId != null ? myUserId : -1%>;
-    const OTHER_ID = <%= otherUserId != null ? otherUserId : -1%>;
-    const ctx = "<%= ctx%>";
+            const MY_ID = <%= myUserId != null ? myUserId : -1%>;
+            const OTHER_ID = <%= otherUserId != null ? otherUserId : -1%>;
 
-    const proto = location.protocol === "https:" ? "wss://" : "ws://";
-    const wsUrl = proto + location.host + ctx + "/ws/chat/" + MY_ID;
-
-    const chatDiv = document.getElementById("chatMessages");
-    const input = document.getElementById("chatInput");
-
-    let ws = new WebSocket(wsUrl);
-
-    // ---------------------------
-    // ON OPEN → Dichiarare la chat aperta
-    // ---------------------------
-    ws.onopen = () => {
-        scrollBottom();
-
-        // COMUNICHIAMO AL SERVER QUALE CHAT È APERTA
-        ws.send(JSON.stringify({
-            type: "ENTER_CHAT",
-            otherUserId: OTHER_ID
-        }));
-    };
-
-    // ---------------------------
-    // ON MESSAGE → Gestione messaggi + READ_CONFIRM
-    // ---------------------------
-    ws.onmessage = (ev) => {
-        const msg = JSON.parse(ev.data);
-
-        // Evento: nuovo messaggio
-        if (msg.text !== undefined) {
-            appendMessage(msg);
-            return;
-        }
-
-        // Evento: READ_CONFIRM
-        if (msg.type === "READ_CONFIRM") {
-            // Aggiorno badge o notifiche (puoi personalizzarlo)
-            console.log("Messaggi del paziente segnati come letti.");
-
-            // Se vuoi aggiornare la dashboard subito:
-            // parent.postMessage({updateNotifications: true}, "*");
-        }
-    };
-
-    ws.onerror = (e) => console.error("WebSocket error:", e);
-
-
-    // ---------------------------
-    // UTILS
-    // ---------------------------
-    function scrollBottom() {
-        chatDiv.scrollTop = chatDiv.scrollHeight;
-    }
-
-    function formatMessage(text) {
-        text = text.replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;");
-
-        const urlRegex = /(https?:\/\/[\w\-._~:\/?#\[\]@!$&'()*+,;=%]+)/g;
-        return text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>');
-    }
-
-    function appendMessage(msg) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "chat-msg-row " + (msg.mine ? "mine" : "other");
-
-        const sender = msg.mine ? "Medico" : "Paziente";
-
-        const box = document.createElement("div");
-        const senderSpan = document.createElement("span");
-        senderSpan.className = "chat-sender";
-        senderSpan.textContent = sender;
-
-        const textSpan = document.createElement("span");
-        textSpan.className = "chat-text";
-        textSpan.innerHTML = formatMessage(msg.text);
-
-        const time = document.createElement("div");
-        time.className = "chat-time";
-
-        try {
-            const d = new Date(msg.sentAt);
-            time.textContent = d.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
-        } catch (e) {
-            time.textContent = "";
-        }
-
-        box.appendChild(senderSpan);
-        box.appendChild(document.createTextNode(": "));
-        box.appendChild(textSpan);
-        box.appendChild(time);
-
-        wrapper.appendChild(box);
-        chatDiv.appendChild(wrapper);
-        scrollBottom();
-    }
-
-    function sendMessage() {
-        const text = input.value.trim();
-        if (!text || ws.readyState !== WebSocket.OPEN)
-            return;
-
-        ws.send(JSON.stringify({
-            destId: OTHER_ID,
-            text: text
-        }));
-
-        input.value = "";
-    }
-
-    input.addEventListener("keyup", e => {
-        if (e.key === "Enter")
-            sendMessage();
-    });
-
-    scrollBottom();
+            initChat({
+                myId: MY_ID,
+                otherId: OTHER_ID,
+                contextPath: "<%= ctx%>",
+                chatContainerSelector: "#chatMessages",
+                inputSelector: "#chatInput",
+                sendButtonSelector: "#sendButton",
+                mineLabel: "Medico",
+                otherLabel: "Paziente"
+            });
         </script>
-
 
         <!-- WEBRTC + CALL LISTENER (un solo WS) -->
         <script src="<%= ctx%>/js/webrtc.js"></script>
         <script>
-    initTelevisit(MY_ID, OTHER_ID);
+            initTelevisit(MY_ID);
         </script>
 
     </body>
