@@ -44,7 +44,7 @@
     <div class="logo">Heart Monitor</div>
     <div class="subtitle">Questionario giornaliero</div>
     <div class="spacer"></div>
-    <a href="<%= request.getContextPath() %>/logout">Logout</a>
+    <a href="<%= request.getContextPath() %>/logout" class="toplink">Logout</a>
 </div>
 
 <div class="layout">
@@ -52,8 +52,8 @@
     <div class="sidebar">
         <a href="dashboard">Dashboard</a>
         <a class="active" href="questionnaire">Questionario</a>
-        <a href="chat">Chat & Televisita</a>
         <a href="metrics">Storico Parametri</a>
+        <a href="chat">Chat & Televisita</a>
     </div>
 
 

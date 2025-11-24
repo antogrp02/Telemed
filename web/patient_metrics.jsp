@@ -71,6 +71,7 @@
         <a href="dashboard">Dashboard</a>
         <a href="questionnaire">Questionario</a>
         <a class="active" href="metrics">Storico Parametri</a>
+        <a href="chat">Chat & Televisita</a>
     </div>
 
     <div class="main">
