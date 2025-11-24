@@ -1,4 +1,4 @@
-(function() {
+(function () {
     function scrollBottom(container) {
         if (container) {
             container.scrollTop = container.scrollHeight;
@@ -11,16 +11,17 @@
         }
 
         const escaped = text.replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;");
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
 
         const urlRegex = /(https?:\/\/[\w\-._~:\/?#\[\]@!$&'()*+,;=%]+)/g;
         return escaped.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
     }
 
     function appendMessage(container, msg, labels) {
-        if (!container || !msg) return;
+        if (!container || !msg)
+            return;
 
         const wrapper = document.createElement("div");
         wrapper.className = "chat-msg-row " + (msg.mine ? "mine" : "other");
@@ -33,9 +34,9 @@
         senderSpan.className = "chat-sender";
         senderSpan.textContent = senderLabel;
 
-        const textSpan = document.createElement("span");
-        textSpan.className = "chat-text";
-        textSpan.innerHTML = formatMessage(msg.text || "");
+        const textDiv = document.createElement("div");
+        textDiv.className = "chat-text";
+        textDiv.innerHTML = formatMessage(msg.text || "");
 
         const time = document.createElement("div");
         time.className = "chat-time";
@@ -48,14 +49,15 @@
         }
 
         box.appendChild(senderSpan);
-        box.appendChild(document.createTextNode(": "));
-        box.appendChild(textSpan);
+        box.appendChild(textDiv);
         box.appendChild(time);
 
         wrapper.appendChild(box);
         container.appendChild(wrapper);
+
         scrollBottom(container);
     }
+
 
     function setupSocket(opts, container, labels, input) {
         const proto = location.protocol === "https:" ? "wss://" : "ws://";
@@ -92,7 +94,7 @@
         return ws;
     }
 
-    window.initChat = function(options) {
+    window.initChat = function (options) {
         const opts = Object.assign({
             enterChatOnOpen: true,
             mineLabel: "Me",
@@ -113,7 +115,8 @@
 
         function sendMessage() {
             const text = input.value.trim();
-            if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+            if (!text || !ws || ws.readyState !== WebSocket.OPEN)
+                return;
 
             ws.send(JSON.stringify({
                 destId: opts.otherId,
@@ -124,7 +127,8 @@
         }
 
         input.addEventListener("keyup", e => {
-            if (e.key === "Enter") sendMessage();
+            if (e.key === "Enter")
+                sendMessage();
         });
 
         if (sendButton) {

@@ -1,7 +1,9 @@
 package controllers;
 
+import dao.AppuntamentoDAO;
 import dao.MedicoDAO;
 import dao.PazienteDAO;
+import model.Appuntamento;
 import model.Medico;
 import model.Paziente;
 
@@ -11,24 +13,28 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet("/doctor/chat")
 public class DoctorChatServlet extends BaseChatServlet {
 
     @Override
     protected int expectedRole() {
-        return 1;
+        return 1; // medico
     }
 
     @Override
-    protected ChatContext buildChatContext(HttpServletRequest req, HttpServletResponse resp,
-                                           HttpSession session, long myUserId)
-            throws ServletException, IOException {
+    protected ChatContext buildChatContext(HttpServletRequest req,
+                                           HttpServletResponse resp,
+                                           HttpSession session,
+                                           long myUserId)
+            throws Exception {
 
-        long idMedico = (long) session.getAttribute("id_medico");
+        Long idMedico = (Long) session.getAttribute("id_medico");
 
-        String idStr = req.getParameter("id"); // id_paziente
-        if (idStr == null) {
+        // 1) ID PAZIENTE DALLA QUERY
+        String idStr = req.getParameter("id");
+        if (idStr == null || idStr.isBlank()) {
             resp.sendRedirect(req.getContextPath() + "/doctor/dashboard");
             return null;
         }
@@ -41,25 +47,27 @@ public class DoctorChatServlet extends BaseChatServlet {
             return null;
         }
 
-        try {
-            Paziente paz = PazienteDAO.getByIdPaziente(idPaziente);
-            Medico med = MedicoDAO.getByIdMedico(idMedico);
+        // 2) CARICO PAZIENTE + MEDICO
+        Paziente paz = PazienteDAO.getByIdPaziente(idPaziente);
+        Medico med = MedicoDAO.getByIdMedico(idMedico);
 
-            if (paz == null || med == null || paz.getIdMedico() != idMedico) {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Paziente non trovato");
-                return null;
-            }
-
-            return new ChatContext(
-                    paz.getIdUtente(),
-                    paz,
-                    med,
-                    "/doctor_chat.jsp",
-                    true
-            );
-
-        } catch (Exception e) {
-            throw new ServletException(e);
+        if (paz == null || med == null || paz.getIdMedico() != idMedico) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Paziente non trovato");
+            return null;
         }
+
+        // 3) CARICO APPUNTAMENTI FUTURI
+        List<Appuntamento> appuntamenti =
+                AppuntamentoDAO.getFuturiByMedicoAndPaziente(idMedico, idPaziente);
+        req.setAttribute("appuntamenti", appuntamenti);
+
+        // 4) RITORNO IL CONTEXT
+        return new ChatContext(
+                paz.getIdUtente(),   // otherUserId
+                paz,
+                med,
+                "/doctor_chat.jsp",
+                true                 // lato medico: segna come letti
+        );
     }
 }

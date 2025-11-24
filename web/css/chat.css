@@ -7,8 +7,39 @@
     --border: 214.3 31.8% 91.4%;
     --muted-foreground: 215.4 16.3% 46.9%;
     --primary: 221.2 83.2% 53.3%;
+    --chat-bubble-mine: 210 90% 48%;
+    --chat-bubble-mine-foreground: 0 0% 100%;
+    --chat-bubble-other: 0 0% 96%;
+    --chat-bubble-other-foreground: 215 25% 15%;
 }
 
+* {
+    box-sizing: border-box;
+}
+
+/* LAYOUT CHAT + APPUNTAMENTI */
+.chat-layout {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 24px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.chat-column {
+    flex: 1;
+    min-width: 0;
+}
+
+.appointments-column {
+    flex: 0 0 400px;
+    width: 400px;
+}
+
+/* CHAT CARD */
 .chat-card {
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
@@ -39,7 +70,7 @@
 }
 
 .chat-messages {
-    height: 256px;
+    height: 400px;
     border: 1px solid hsl(var(--border));
     border-radius: 12px;
     padding: 12px;
@@ -47,43 +78,84 @@
     overflow-y: auto;
     font-size: 14px;
     margin-bottom: 12px;
+    overflow-x: hidden
 }
 
+/* BOLLE MESSAGGI */
 .chat-msg-row {
-    margin-bottom: 8px;
+    display: flex;
+    margin-bottom: 16px;
+    max-width: 100%;
 }
 
 .chat-msg-row.mine {
-    text-align: right;
+    justify-content: flex-end;
 }
 
 .chat-msg-row.other {
-    text-align: left;
+    justify-content: flex-start;
+}
+
+/* ✅ wrapper libero, niente max-width */
+.chat-msg-row > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.chat-msg-row.mine > div {
+    align-items: flex-end;
+}
+
+.chat-msg-row.other > div {
+    align-items: flex-start;
 }
 
 .chat-sender {
+    font-size: 12px;
     font-weight: 500;
-    color: hsl(var(--foreground));
-    margin-right: 4px;
+    color: hsl(var(--muted-foreground));
+    padding: 0 4px;
+    display: block;
 }
 
+/* ✅ limite larghezza bolla (fix definitivo) */
 .chat-text {
-    color: hsl(var(--foreground));
-    word-wrap: break-word;
-    word-break: break-word;
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.2;
+  word-wrap: break-word;
+  white-space: normal;
+  max-width: 420px;
+  display: inline-flex;
+  align-items: center; /* 🔥 evita bolle alte */
+}
+
+
+.chat-msg-row.mine .chat-text {
+    background: hsl(var(--chat-bubble-mine));
+    color: hsl(var(--chat-bubble-mine-foreground));
+    border-bottom-right-radius: 4px;
+}
+
+.chat-msg-row.other .chat-text {
+    background: hsl(var(--chat-bubble-other));
+    color: hsl(var(--chat-bubble-other-foreground));
+    border-bottom-left-radius: 4px;
 }
 
 .chat-text a {
-    color: hsl(var(--primary));
+    color: inherit;
     text-decoration: underline;
 }
 
 .chat-time {
     font-size: 11px;
     color: hsl(var(--muted-foreground));
-    margin-top: 2px;
+    padding: 0 4px;
+    display: block;
 }
 
 .chat-date-sep {
@@ -93,6 +165,7 @@
     margin: 16px 0;
 }
 
+/* INPUT */
 .chat-input-bar {
     display: flex;
     align-items: center;
@@ -153,4 +226,163 @@
 
 .video-btn:hover {
     background: hsl(var(--secondary) / 0.8);
+}
+
+/* APPOINTMENTS CARD */
+.appointments-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: 16px;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    overflow: hidden;
+}
+
+.appointments-header {
+    padding: 24px 24px 0;
+}
+
+.appointments-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    margin: 0 0 4px 0;
+}
+
+.appointments-subtitle {
+    font-size: 14px;
+    color: hsl(var(--muted-foreground));
+    margin: 0;
+}
+
+.appointments-content {
+    padding: 24px;
+}
+
+.appointments-list {
+    height: 300px;
+    border: 1px solid hsl(var(--border));
+    border-radius: 12px;
+    padding: 12px;
+    background: hsl(var(--secondary));
+    overflow-y: auto;
+    margin-bottom: 12px;
+}
+
+.appointment-row {
+    padding: 12px;
+    margin-bottom: 8px;
+    background: hsl(var(--background));
+    border-radius: 8px;
+    border: 1px solid hsl(var(--border));
+}
+
+.appointment-row:last-child {
+    margin-bottom: 0;
+}
+
+.appointment-type {
+    font-weight: 500;
+    color: hsl(var(--foreground));
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.appointment-date {
+    font-size: 12px;
+    color: hsl(var(--muted-foreground));
+}
+
+.appointments-empty {
+    text-align: center;
+    padding: 40px 20px;
+    font-size: 14px;
+    color: hsl(var(--muted-foreground));
+}
+
+.appointments-form {
+    border-top: 1px solid hsl(var(--border));
+    padding-top: 16px;
+}
+
+.appointments-form-row {
+    margin-bottom: 12px;
+}
+
+.appointments-form-row:last-child {
+    margin-bottom: 0;
+}
+
+.appointments-form-row label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: hsl(var(--foreground));
+    margin-bottom: 6px;
+}
+
+.appointments-form-row input,
+.appointments-form-row select {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+}
+
+.appointments-form-row input:focus,
+.appointments-form-row select:focus {
+    outline: none;
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+}
+
+.appointments-submit-btn {
+    width: 100%;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: hsl(var(--primary));
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.appointments-submit-btn:hover {
+    filter: brightness(1.05);
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+    .chat-layout {
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+    }
+    
+    .appointments-column {
+        flex: 1;
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .chat-layout {
+        padding: 12px;
+    }
+    
+    .chat-text {
+        max-width: 85%; /* ✅ più strette su mobile */
+    }
+    
+    .chat-messages {
+        height: 300px;
+    }
+    
+    .appointments-list {
+        height: 250px;
+    }
 }
