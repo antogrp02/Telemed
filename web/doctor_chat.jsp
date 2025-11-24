@@ -1,4 +1,4 @@
-<%-- 
+<%--
     Document   : doctor_chat
     Created on : 20 nov 2025, 11:36:44
     Author     : Antonio
@@ -6,21 +6,8 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="java.util.List" %>
 <%@ page import="model.ChatMessage, model.Paziente, model.Medico" %>
-
-<%!
-    private String formatMessageJSP(String text) {
-        if (text == null) {
-            return "";
-        }
-        text = text.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;");
-        String urlRegex = "(https?://[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=%]+)";
-        text = text.replaceAll(urlRegex, "<a href=\"$1\" target=\"_blank\" rel=\"noopener noreferrer\">$1</a>");
-        return text;
-    }
-%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="msg" uri="http://telemed/functions" %>
 
 <%
     Paziente paz = (Paziente) request.getAttribute("paziente");
@@ -246,12 +233,13 @@
                                 String sender = mine ? "Medico" : "Paziente";
                                 java.time.LocalTime t = m.getInviatoIl().toLocalDateTime().toLocalTime();
                                 String orario = String.format("%02d:%02d", t.getHour(), t.getMinute());
+                                pageContext.setAttribute("messageText", m.getTesto());
                             %>
 
                             <div class="chat-msg-row <%= mine ? "mine" : "other"%>">
                                 <div>
                                     <span class="chat-sender"><%= sender%></span>:
-                                    <span class="chat-text"><%= formatMessageJSP(m.getTesto())%></span>
+                                    <span class="chat-text"><c:out value="${msg:formatMessage(messageText)}" escapeXml="false" /></span>
                                     <div class="chat-time"><%= orario%></div>
                                 </div>
                             </div>
