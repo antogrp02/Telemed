@@ -4,35 +4,33 @@
  */
 package controllers;
 
-import dao.ChatMessageDAO;
 import dao.MedicoDAO;
 import dao.PazienteDAO;
-import model.ChatMessage;
 import model.Medico;
 import model.Paziente;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.List;
 
 @WebServlet("/patient/chat")
-public class PatientChatServlet extends HttpServlet {
+public class PatientChatServlet extends BaseChatServlet {
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-        throws ServletException, IOException {
+    protected int expectedRole() {
+        return 0;
+    }
 
-        HttpSession s = req.getSession(false);
-        if (s == null || s.getAttribute("role") == null || (int) s.getAttribute("role") != 0) {
-            resp.sendRedirect(req.getContextPath() + "/login");
-            return;
-        }
+    @Override
+    protected ChatContext buildChatContext(HttpServletRequest req, HttpServletResponse resp,
+                                           HttpSession session, long myUserId)
+            throws ServletException {
 
-        long idUtente = (long) s.getAttribute("id_utente");
-        long idPaziente = (long) s.getAttribute("id_paziente");
-        long idMedico = (long) s.getAttribute("id_medico");
+        long idPaziente = (long) session.getAttribute("id_paziente");
+        long idMedico = (long) session.getAttribute("id_medico");
 
         try {
             Paziente paz = PazienteDAO.getByIdPaziente(idPaziente);
@@ -40,20 +38,16 @@ public class PatientChatServlet extends HttpServlet {
 
             if (paz == null || med == null) {
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
+                return null;
             }
 
-            long otherUserId = med.getIdUtente();
-
-            List<ChatMessage> history = ChatMessageDAO.getHistory(idUtente, otherUserId);
-
-            req.setAttribute("history", history);
-            req.setAttribute("myUserId", idUtente);
-            req.setAttribute("otherUserId", otherUserId);
-            req.setAttribute("paziente", paz);  // per anagrafica
-            req.setAttribute("medico", med);    // per intestazione "Medico X"
-
-            req.getRequestDispatcher("/patient_chat.jsp").forward(req, resp);
+            return new ChatContext(
+                    med.getIdUtente(),
+                    paz,
+                    med,
+                    "/patient_chat.jsp",
+                    false
+            );
 
         } catch (Exception e) {
             throw new ServletException(e);
