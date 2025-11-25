@@ -39,67 +39,140 @@
         <style>
             /* Pulsanti range grafico */
             .chart-btn {
-                padding: 4px 10px;
-                border-radius: 6px;
-                border: none;
+                padding: 8px 16px;
+                border-radius: 12px;
+                border: 1px solid #e2e8f0;
                 cursor: pointer;
-                background: #e2e8f0;
-                transition: 0.2s;
+                background: #ffffff;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 font-size: 12px;
-                margin-left: 4px;
+                font-weight: 600;
+                margin-left: 6px;
+                color: #475569;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
             }
+
+            .chart-btn:hover {
+                background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                border-color: #cbd5e1;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+            }
+
             .chart-btn.active {
-                background: #0ea5e9;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
+                border-color: transparent;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+                transform: translateY(-1px);
+            }
+
+            .chart-btn:active {
+                transform: translateY(0);
             }
 
             .two-cols {
                 display: grid;
                 grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.2fr);
-                gap: 16px;
-                margin-top: 18px;
+                gap: 24px;
+                margin-top: 24px;
+            }
+
+            @media (max-width: 1024px) {
+                .two-cols {
+                    grid-template-columns: 1fr;
+                }
             }
 
             .question-row {
                 display: flex;
                 justify-content: space-between;
-                margin-bottom: 6px;
+                align-items: center;
+                margin-bottom: 12px;
                 font-size: 14px;
+                color: #334155;
+                font-weight: 500;
             }
 
             .badge-soft {
                 display: inline-flex;
                 align-items: center;
-                padding: 3px 8px;
+                padding: 6px 12px;
                 border-radius: 999px;
-                font-size: 12px;
-                background: #e5e7eb;
-                color: #374151;
+                font-size: 11px;
+                font-weight: 700;
+                background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+                color: #475569;
+                border: 1px solid #cbd5e1;
+                box-shadow: 0 2px 6px rgba(71, 85, 105, 0.08);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                transition: all 0.3s ease;
+            }
+
+            .badge-soft:hover {
+                transform: scale(1.05);
+                box-shadow: 0 2px 8px rgba(71, 85, 105, 0.12);
             }
 
             .badge-soft.red {
-                background: #fee2e2;
+                background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
                 color: #b91c1c;
+                border: 1px solid #fca5a5;
+                box-shadow: 0 2px 8px rgba(185, 28, 28, 0.15);
             }
 
             .badge-soft.amber {
-                background: #fef3c7;
+                background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
                 color: #92400e;
+                border: 1px solid #fcd34d;
+                box-shadow: 0 2px 8px rgba(146, 64, 14, 0.15);
             }
 
             .alerts-list {
                 font-size: 14px;
+                color: #334155;
             }
+
             .alerts-item {
-                padding: 6px 8px;
-                border-radius: 8px;
-                border: 1px solid #e5e7eb;
-                margin-bottom: 6px;
-                background: #f9fafb;
+                padding: 14px 16px;
+                border-radius: 12px;
+                border: 1px solid #e2e8f0;
+                margin-bottom: 10px;
+                background: #ffffff;
+                box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                overflow: hidden;
             }
+
+            .alerts-item::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: 3px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+
+            .alerts-item:hover {
+                border-color: #cbd5e1;
+                box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+                transform: translateX(4px);
+            }
+
+            .alerts-item:hover::before {
+                opacity: 1;
+            }
+
             .alerts-item strong {
-                font-weight: 600;
+                font-weight: 700;
+                color: #0f172a;
             }
+
         </style>
     </head>
 
@@ -117,6 +190,7 @@
             <!-- SIDEBAR -->
             <div class="sidebar">
                 <a href="dashboard">Pazienti</a>
+                <a href="appointments">Appuntamenti</a>
                 <a href="alerts">Alert</a>
             </div>
 
@@ -341,7 +415,7 @@
 
                                 <%   } // end for
                                     } // end else
-                                %>
+%>
                             </div>
                         </div>
                     </div>

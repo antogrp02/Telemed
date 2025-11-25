@@ -32,56 +32,101 @@
             #notifIcon {
                 cursor: pointer;
                 position: relative;
-                color: white;
+                color: #f8fafc;
                 margin-right: 25px;
                 font-size: 20px;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            #notifIcon:hover {
+                color: #ffffff;
+                transform: scale(1.1);
             }
 
             .notifBadge {
-                background: #2563eb;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
-                padding: 3px 8px;
+                padding: 4px 10px;
                 border-radius: 999px;
-                font-size: 12px;
+                font-size: 11px;
+                font-weight: 700;
                 position: absolute;
-                top: -6px;
-                right: -10px;
+                top: -8px;
+                right: -12px;
+                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+                animation: pulse 2s ease-in-out infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.05);
+                }
             }
 
             #notifBox {
-                position: absolute;
-                top: 55px;
+                position: fixed;
+                top: 80px; /* Altezza topbar + piccolo margine */
                 right: 20px;
-                width: 290px;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 10px;
-                box-shadow: 0px 4px 14px rgba(0,0,0,0.15);
+                width: 320px;
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15);
                 display: none;
-                z-index: 500;
+                z-index: 999;
+                overflow: hidden;
+                animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             .notif-header {
-                padding: 10px;
-                font-weight: bold;
-                background: #f3f4f6;
-                border-bottom: 1px solid #ddd;
+                padding: 16px 20px;
+                font-weight: 700;
+                font-size: 14px;
+                background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                border-bottom: 1px solid #e2e8f0;
+                color: #0f172a;
+                letter-spacing: 0.5px;
             }
 
             .notif-item {
-                padding: 10px 12px;
+                padding: 14px 20px;
                 cursor: pointer;
-                border-bottom: 1px solid #eee;
+                border-bottom: 1px solid #f1f5f9;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                color: #334155;
+                font-size: 14px;
             }
 
             .notif-item:hover {
-                background: #f9fafb;
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+                transform: translateX(4px);
+            }
+
+            .notif-item:last-child {
+                border-bottom: none;
             }
 
             .notif-empty {
-                padding: 15px;
+                padding: 24px;
                 text-align: center;
-                color: #777;
+                color: #64748b;
+                font-size: 14px;
+                font-weight: 500;
             }
 
             /* --- DROPDOWN RICERCA --- */
@@ -89,55 +134,102 @@
                 position: absolute;
                 top: 40px;
                 width: 100%;
-                background: white;
+                background: #ffffff;
                 border: 1px solid #e2e8f0;
-                border-radius: 8px;
+                border-radius: 12px;
                 display: none;
                 z-index: 200;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-                max-height: 240px;
+                box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+                max-height: 280px;
                 overflow-y: auto;
+                animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
+
             .result-item {
-                padding: 10px 12px;
+                padding: 12px 16px;
                 cursor: pointer;
                 font-size: 14px;
-                color: #1e293b;
+                color: #334155;
                 border-bottom: 1px solid #f1f5f9;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                font-weight: 500;
             }
+
             .result-item:hover {
-                background: #f8fafc;
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+                color: #0f172a;
+                transform: translateX(4px);
+            }
+
+            .result-item:last-child {
+                border-bottom: none;
             }
 
             /* --- BOTTONI --- */
             .btn-primary-sm {
-                padding: 6px 12px;
-                border-radius: 999px;
+                padding: 8px 16px;
+                border-radius: 12px;
                 border: none;
                 cursor: pointer;
-                background: linear-gradient(to right, #0ea5e9, #6366f1);
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 color: white;
                 font-size: 13px;
-                font-weight: 500;
+                font-weight: 700;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+                letter-spacing: 0.3px;
+            }
+
+            .btn-primary-sm:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            }
+
+            .btn-primary-sm:active {
+                transform: translateY(0);
             }
 
             /* --- BADGE ALERT --- */
             .badge-alert {
                 display: inline-flex;
-                padding: 4px 8px;
+                align-items: center;
+                padding: 6px 12px;
                 border-radius: 999px;
                 font-size: 12px;
-                background: #fee2e2;
+                font-weight: 700;
+                background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
                 color: #b91c1c;
+                border: 1px solid #fca5a5;
+                box-shadow: 0 2px 8px rgba(185, 28, 28, 0.15);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                transition: all 0.3s ease;
             }
+
+            .badge-alert:hover {
+                transform: scale(1.05);
+            }
+
             .badge-none {
                 display: inline-flex;
-                padding: 4px 8px;
+                align-items: center;
+                padding: 6px 12px;
                 border-radius: 999px;
                 font-size: 12px;
-                background: #e5e7eb;
+                font-weight: 700;
+                background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
                 color: #475569;
+                border: 1px solid #cbd5e1;
+                box-shadow: 0 2px 8px rgba(71, 85, 105, 0.1);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                transition: all 0.3s ease;
             }
+
+            .badge-none:hover {
+                transform: scale(1.05);
+            }
+
         </style>
     </head>
 
@@ -181,8 +273,8 @@
                 </div>
 
                 <% }
-                }
-            }%>
+                        }
+                    }%>
             </div>
         </div>
 
@@ -191,8 +283,10 @@
             <!-- SIDEBAR -->
             <div class="sidebar">
                 <a href="<%= ctx%>/doctor/dashboard" class="active">Pazienti</a>
+                <a href="<%= ctx%>/doctor/appointments">Appuntamenti</a>
                 <a href="<%= ctx%>/doctor/alerts">Alert</a>
             </div>
+
 
             <!-- CONTENUTO PRINCIPALE -->
             <div class="main">
@@ -277,7 +371,7 @@
                         </tr>
 
                         <% }
-                }%>
+                            }%>
                     </tbody>
                 </table>
 
@@ -347,61 +441,61 @@
 
         <!-- WEBSOCKET NOTIFICHE REALTIME -->
         <script>
-    const MY_ID = <%= session.getAttribute("id_utente")%>;
+            const MY_ID = <%= session.getAttribute("id_utente")%>;
 
-    const wsProto = location.protocol === "https:" ? "wss://" : "ws://";
-    const wsUrl = wsProto + location.host + "<%= ctx%>/ws/chat/" + MY_ID;
+            const wsProto = location.protocol === "https:" ? "wss://" : "ws://";
+            const wsUrl = wsProto + location.host + "<%= ctx%>/ws/chat/" + MY_ID;
 
-    let ws = new WebSocket(wsUrl);
+            let ws = new WebSocket(wsUrl);
 
-    ws.onmessage = (ev) => {
-        const msg = JSON.parse(ev.data);
+            ws.onmessage = (ev) => {
+                const msg = JSON.parse(ev.data);
 
-        // Solo messaggi ricevuti da pazienti reali
-        if (!msg.mine && msg.pazienteId > 0) {
+                // Solo messaggi ricevuti da pazienti reali
+                if (!msg.mine && msg.pazienteId > 0) {
 
-            const badge = document.getElementById("notifBadge");
-            const list = document.getElementById("notifList");
+                    const badge = document.getElementById("notifBadge");
+                    const list = document.getElementById("notifList");
 
-            // aggiorno badge
-            let num = parseInt(badge.textContent) || 0;
-            badge.textContent = num + 1;
+                    // aggiorno badge
+                    let num = parseInt(badge.textContent) || 0;
+                    badge.textContent = num + 1;
 
-            // rimuovo placeholder "nessun messaggio"
-            const empty = document.querySelector(".notif-empty");
-            if (empty)
-                empty.remove();
+                    // rimuovo placeholder "nessun messaggio"
+                    const empty = document.querySelector(".notif-empty");
+                    if (empty)
+                        empty.remove();
 
-            // controllo se il paziente ha già una riga
-            const existing = document.getElementById("notif-item-" + msg.pazienteId);
+                    // controllo se il paziente ha già una riga
+                    const existing = document.getElementById("notif-item-" + msg.pazienteId);
 
-            if (existing) {
-                let c = parseInt(existing.dataset.count) || 0;
-                c++;
-                existing.dataset.count = c;
+                    if (existing) {
+                        let c = parseInt(existing.dataset.count) || 0;
+                        c++;
+                        existing.dataset.count = c;
 
-                const fullName = existing.dataset.name;
-                existing.innerHTML = fullName + " — " + c + " messaggi";
+                        const fullName = existing.dataset.name;
+                        existing.innerHTML = fullName + " — " + c + " messaggi";
 
-            } else {
-                // creo nuova riga
-                const item = document.createElement("div");
-                item.className = "notif-item";
-                item.id = "notif-item-" + msg.pazienteId;
+                    } else {
+                        // creo nuova riga
+                        const item = document.createElement("div");
+                        item.className = "notif-item";
+                        item.id = "notif-item-" + msg.pazienteId;
 
-                const fullName = (msg.pazienteNome || "Paziente") + " " +
-                        (msg.pazienteCognome || "");
+                        const fullName = (msg.pazienteNome || "Paziente") + " " +
+                                (msg.pazienteCognome || "");
 
-                item.dataset.name = fullName;
-                item.dataset.count = 1;
-                item.innerHTML = fullName + " — 1 messaggio";
+                        item.dataset.name = fullName;
+                        item.dataset.count = 1;
+                        item.innerHTML = fullName + " — 1 messaggio";
 
-                item.onclick = () => location.href = "<%= ctx%>/doctor/chat?id=" + msg.pazienteId;
+                        item.onclick = () => location.href = "<%= ctx%>/doctor/chat?id=" + msg.pazienteId;
 
-                list.appendChild(item);
-            }
-        }
-    };
+                        list.appendChild(item);
+                    }
+                }
+            };
         </script>
 
         <%@ include file="/WEB-INF/includes/video_window.jsp" %>

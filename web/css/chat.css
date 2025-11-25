@@ -9,8 +9,8 @@
     --primary: 221.2 83.2% 53.3%;
     --chat-bubble-mine: 210 90% 48%;
     --chat-bubble-mine-foreground: 0 0% 100%;
-    --chat-bubble-other: 0 0% 96%;
-    --chat-bubble-other-foreground: 215 25% 15%;
+    --chat-bubble-other: 30 70% 90%;
+    --chat-bubble-other-foreground: 200 25% 15%;
 }
 
 * {
@@ -122,15 +122,15 @@
 
 /* ✅ limite larghezza bolla (fix definitivo) */
 .chat-text {
-  padding: 8px 14px;
-  border-radius: 16px;
-  font-size: 14px;
-  line-height: 1.2;
-  word-wrap: break-word;
-  white-space: normal;
-  max-width: 420px;
-  display: inline-flex;
-  align-items: center; /* 🔥 evita bolle alte */
+    padding: 8px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.2;
+    word-wrap: break-word;
+    white-space: normal;
+    max-width: 420px;
+    display: inline-flex;
+    align-items: center; /* 🔥 evita bolle alte */
 }
 
 
@@ -274,7 +274,11 @@
     background: hsl(var(--background));
     border-radius: 8px;
     border: 1px solid hsl(var(--border));
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 🔥 spazio uniforme e scalabile */
 }
+
 
 .appointment-row:last-child {
     margin-bottom: 0;
@@ -362,7 +366,7 @@
         gap: 16px;
         padding: 16px;
     }
-    
+
     .appointments-column {
         flex: 1;
         width: 100%;
@@ -373,15 +377,15 @@
     .chat-layout {
         padding: 12px;
     }
-    
+
     .chat-text {
         max-width: 85%; /* ✅ più strette su mobile */
     }
-    
+
     .chat-messages {
         height: 300px;
     }
-    
+
     .appointments-list {
         height: 250px;
     }

@@ -43,6 +43,7 @@
 
             <div class="sidebar">
                 <a href="<%= ctx%>/doctor/dashboard">Pazienti</a>
+                <a href="<%= ctx%>/doctor/appointments">Appuntamenti</a>
                 <a href="<%= ctx%>/doctor/alerts">Alert</a>
                 <a href="<%= ctx%>/doctor/chat?id=<%= paz.getIdPaz()%>" class="active">Chat</a>
             </div>
@@ -96,7 +97,6 @@
                                             <div class="chat-time"><%= orario%></div>
                                         </div>
                                     </div>
-
 
                                     <% }
                                     } else { %>
@@ -172,7 +172,11 @@
 
                                     <div class="appointments-form-row">
                                         <label>Data:</label>
-                                        <input type="date" name="data" required />
+                                        <!-- Data impostata da JS per accettare solo da DOMANI in poi -->
+                                        <input type="date"
+                                               id="appointmentDate"
+                                               name="data"
+                                               required />
                                     </div>
 
                                     <div class="appointments-form-row">
@@ -192,7 +196,6 @@
                 </div><!-- END layout a 2 colonne -->
             </div>
         </div>
-
 
         <script src="<%= ctx%>/js/chat.js"></script>
         <script>
@@ -214,6 +217,23 @@
         <script src="<%= ctx%>/js/webrtc.js"></script>
         <script>
                                         initTelevisit(MY_ID);
+
+                                        // 👉 Imposta min della data a DOMANI lato client, così evitiamo qualsiasi problema di formato
+                                        document.addEventListener("DOMContentLoaded", function () {
+                                            const input = document.getElementById("appointmentDate");
+                                            if (!input)
+                                                return;
+
+                                            const tomorrow = new Date();
+                                            tomorrow.setDate(tomorrow.getDate() + 1);
+
+                                            const minDate = tomorrow.toISOString().slice(0, 10);  // YYYY-MM-DD
+
+                                            input.min = minDate;
+
+                                            console.log("[DoctorChat] minDate correttamente impostata a:", minDate);
+                                        });
+
         </script>
 
     </body>
