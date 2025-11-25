@@ -11,6 +11,9 @@ public class Medico {
 
     private String nome;
     private String cognome;
+    
+    private String cf;
+    private String mail;
 
     // --- GETTER & SETTER ---
 
@@ -45,4 +48,21 @@ public class Medico {
     public void setCognome(String cognome) {
         this.cognome = cognome;
     }
+    
+    public String getCf() {
+        return cf;
+    }
+
+    public void setCf(String cf) {
+        this.cf = cf;
+    }
+
+    public String getMail() {
+        return mail;
+    }
+
+    public void setMail(String mail) {
+        this.mail = mail;
+    }
 }
+

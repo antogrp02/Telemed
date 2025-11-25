@@ -39,4 +39,29 @@ public class CredenzialiDAO {
             return c;
         }
     }
+    
+        public static void insert(String username, String password, int role) throws Exception {
+        String sql = "INSERT INTO credenziali(\"Username\", \"Password\", \"Role\") VALUES (?, ?, ?)";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            ps.setString(2, password);
+            ps.setInt(3, role);
+            ps.executeUpdate();
+        }
+    }
+
+    public static void deleteByUsername(String username) throws Exception {
+        String sql = "DELETE FROM credenziali WHERE \"Username\" = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            ps.executeUpdate();
+        }
+    }
+
 }

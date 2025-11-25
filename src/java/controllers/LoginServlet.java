@@ -84,7 +84,7 @@ public class LoginServlet extends HttpServlet {
             }
 
             // ADMIN (role == 2)
-            resp.sendRedirect("admin/model");
+            resp.sendRedirect("admin/users");
 
         } catch (Exception e) {
             throw new ServletException(e);
