@@ -26,13 +26,24 @@
       <input type="password" name="password" required />
 
       <button type="submit" class="btn-primary">Accedi</button>
-
+      
+      <div class="mt-2">
+          <a href="password/forgot" class="link-small">Password dimenticata?</a>
+      </div>
       <%
         String error = (String) request.getAttribute("error");
         if (error != null) {
       %>
         <div class="error"><%= error %></div>
       <% } %>
+
+      <%
+        String success = (String) request.getAttribute("success");
+        if (success != null) {
+      %>
+        <div class="success"><%= success %></div>
+      <% } %>
+
     </form>
   </div>
 </div>

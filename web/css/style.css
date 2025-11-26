@@ -696,3 +696,30 @@ h2 {
   transform: translateY(-2px);
   box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
 }
+
+.success {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    background-color: #d4edda;
+    color: #155724;
+    font-size: 0.9rem;
+}
+
+/* Spaziatura verticale piccola */
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+/* Link testuali piccoli (es. "Password dimenticata?") */
+.link-small {
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-top: 0.25rem;
+    text-decoration: none;
+    color: #007bff; /* o il blu che usi già nei link */
+}
+
+.link-small:hover {
+    text-decoration: underline;
+}

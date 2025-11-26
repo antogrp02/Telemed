@@ -63,5 +63,18 @@ public class CredenzialiDAO {
             ps.executeUpdate();
         }
     }
+    
+        public static void updatePassword(String username, String newPassword) throws Exception {
+        String sql = "UPDATE credenziali SET \"Password\" = ? WHERE \"Username\" = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, newPassword);  // per ora mantieni in chiaro come il resto del progetto
+            ps.setString(2, username);
+            ps.executeUpdate();
+        }
+    }
+
 
 }

@@ -298,5 +298,30 @@ public class PazienteDAO {
             return rs.next();
         }
     }
+    
+        public static Paziente getByMail(String mail) throws Exception {
+        String sql = "SELECT * FROM paziente WHERE mail = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, mail);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+
+                Paziente p = new Paziente();
+                p.setIdPaz(rs.getLong("id_paziente"));
+                p.setIdUtente(rs.getLong("id_utente"));
+                p.setNome(rs.getString("nome"));
+                p.setCognome(rs.getString("cognome"));
+                p.setMail(rs.getString("mail"));
+                // setta qui gli altri campi se ti servono
+                return p;
+            }
+        }
+    }
+
 
 }
