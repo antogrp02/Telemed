@@ -9,7 +9,7 @@
 <html>
 <head>
   <title>Heart Monitor - Login</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
 </head>
 <body class="bg-main">
 
@@ -18,7 +18,7 @@
     <h1 class="app-title">Heart Monitor</h1>
     <p class="app-subtitle">Telemonitoraggio Scompenso Cardiaco</p>
 
-    <form method="post" action="login" class="login-form">
+    <form method="post" action="<%= request.getContextPath() %>/login" class="login-form">
       <label>Username</label>
       <input type="text" name="username" required />
 
@@ -28,7 +28,7 @@
       <button type="submit" class="btn-primary">Accedi</button>
       
       <div class="mt-2">
-          <a href="password/forgot" class="link-small">Password dimenticata?</a>
+          <a href="<%= request.getContextPath() %>/forgot_password.jsp" class="link-small">Password dimenticata?</a>
       </div>
       <%
         String error = (String) request.getAttribute("error");
