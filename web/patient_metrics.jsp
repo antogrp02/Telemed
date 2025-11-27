@@ -12,9 +12,10 @@
     <head>
         <title>Storico Parametri</title>
 
-        <link rel="stylesheet" href="../css/style.css">
+        <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="../js/charts.js"></script>
+        <script src="<%= request.getContextPath() %>/js/charts.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <style>
             .charts-grid {
@@ -120,16 +121,16 @@
             <div class="logo">Heart Monitor</div>
             <div class="subtitle">Storico Parametri</div>
             <div class="spacer"></div>
-            <a href="../logout" class="toplink">Logout</a>
+            <a href="<%= request.getContextPath() %>/logout" class="toplink">Logout</a>
         </div>
 
         <div class="layout">
 
             <div class="sidebar">
-                <a href="dashboard">Dashboard</a>
-                <a href="questionnaire">Questionario</a>
-                <a class="active" href="metrics">Storico Parametri</a>
-                <a href="chat">Chat & Televisita</a>
+                <a href="<%= request.getContextPath() %>/dashboard">Dashboard</a>
+                <a href="<%= request.getContextPath() %>/questionnaire">Questionario</a>
+                <a class="active" href="<%= request.getContextPath() %>/metrics">Storico Parametri</a>
+                <a href="<%= request.getContextPath() %>/chat">Chat & Televisita</a>
             </div>
 
             <div class="main">

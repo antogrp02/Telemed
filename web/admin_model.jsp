@@ -14,7 +14,9 @@
 <html>
 <head>
   <title>Heart Monitor - Admin Modello</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 </head>
 <body>
 
@@ -22,7 +24,7 @@
   <div class="logo">Heart Monitor</div>
   <div class="subtitle">Admin Modello ML</div>
   <div class="spacer"></div>
-  <a href="../logout" class="toplink">Logout</a>
+  <a href="<%= request.getContextPath() %>/logout" class="toplink">Logout</a>
 </div>
 
 <div class="layout">

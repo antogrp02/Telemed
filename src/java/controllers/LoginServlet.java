@@ -24,13 +24,13 @@ public class LoginServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
         req.getRequestDispatcher("login.jsp").forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
 
         String username = req.getParameter("username");
         String password = req.getParameter("password");
@@ -41,6 +41,16 @@ public class LoginServlet extends HttpServlet {
             if (c == null) {
                 req.setAttribute("error", "Credenziali non valide");
                 req.getRequestDispatcher("login.jsp").forward(req, resp);
+                return;
+            }
+
+            // PASSWORD TEMPORANEA → FORZARE CAMBIO
+            if (c.ForcedChange) {
+                HttpSession session = req.getSession(true);
+                session.setAttribute("force_username", c.username);
+                session.setAttribute("force_role", c.role);  // ci servirà per il redirect finale
+
+                resp.sendRedirect(req.getContextPath() + "<%= request.getContextPath() %>/change_password.jsp");
                 return;
             }
 

@@ -26,11 +26,13 @@
         <title>Heart Monitor - Chat Paziente</title>
         <link rel="stylesheet" href="<%= ctx %>/css/style.css">
         <link rel="stylesheet" href="<%= ctx %>/css/chat.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     </head>
     <body>
 
         <%@ include file="/WEB-INF/includes/video_window.jsp" %>
-
+        
         <div class="topbar">
             <div class="logo">Heart Monitor</div>
             <div class="subtitle">Chat con il medico</div>

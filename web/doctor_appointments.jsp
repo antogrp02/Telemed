@@ -30,7 +30,8 @@
 <head>
     <title>Heart Monitor - Appuntamenti medico</title>
     <link rel="stylesheet" href="<%= ctx %>/css/style.css">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <!-- (STYLES NON MODIFICATI, LI MANTENGO UGUALI) -->
     <style>
      

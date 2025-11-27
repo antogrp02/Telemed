@@ -10,6 +10,7 @@
 <head>
     <title>Questionario Sintomi</title>
     <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script>
         let formSubmitted = false;
@@ -50,10 +51,10 @@
 <div class="layout">
 
     <div class="sidebar">
-        <a href="dashboard">Dashboard</a>
-        <a class="active" href="questionnaire">Questionario</a>
-        <a href="metrics">Storico Parametri</a>
-        <a href="chat">Chat & Televisita</a>
+        <a href="<%= request.getContextPath() %>/dashboard">Dashboard</a>
+        <a class="active" href="<%= request.getContextPath() %>/questionnaire">Questionario</a>
+        <a href="<%= request.getContextPath() %>/metrics">Storico Parametri</a>
+        <a href="<%= request.getContextPath() %>/chat">Chat & Televisita</a>
     </div>
 
 

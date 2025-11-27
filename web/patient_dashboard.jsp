@@ -27,6 +27,7 @@
     <head>
         <title>Heart Monitor - Paziente</title>
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
@@ -42,15 +43,15 @@
             <div class="logo">Heart Monitor</div>
             <div class="subtitle">Telemonitoraggio HF · Paziente</div>
             <div class="spacer"></div>
-            <a href="../logout" class="toplink">Logout</a>
+            <a href="<%= request.getContextPath() %>/logout" class="toplink">Logout</a>
         </div>
 
         <div class="layout">
             <div class="sidebar">
-                <a class="active" href="dashboard">Dashboard</a>
-                <a href="questionnaire">Questionario</a>
-                <a href="metrics">Storico Parametri</a>
-                <a href="chat">Chat & Televisita</a>
+                <a class="active" href="<%= request.getContextPath() %>/dashboard">Dashboard</a>
+                <a href="<%= request.getContextPath() %>/questionnaire">Questionario</a>
+                <a href="<%= request.getContextPath() %>/metrics">Storico Parametri</a>
+                <a href="<%= request.getContextPath() %>/chat">Chat & Televisita</a>
             </div>
 
 
@@ -65,7 +66,7 @@
                         <b>Questionario non completato</b><br>
                         Per ottenere la valutazione di rischio di oggi devi compilare il questionario dei sintomi.
                     </div>
-                    <a href="questionnaire" class="alert-btn">Compila ora</a>
+                    <a href="<%= request.getContextPath() %>/questionnaire" class="alert-btn">Compila ora</a>
                 </div>
 
                 <script>
@@ -153,7 +154,7 @@
         <script>
             const riskData = <%= new com.google.gson.Gson().toJson(request.getAttribute("storicoRisk"))%>;
         </script>
-        <script src="../js/charts.js"></script>
+        <script src="<%= request.getContextPath() %>/js/charts.js"></script>
 
         <!-- Popup conferma questionario -->
         <div id="qModal" class="modal-overlay" style="display: <%= showPopup ? "flex" : "none"%>;">

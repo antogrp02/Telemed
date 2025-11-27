@@ -19,6 +19,8 @@
     <head>
         <title>Heart Monitor - Admin Utenti</title>
         <link rel="stylesheet" href="<%= ctx%>/css/style.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
         <style>
             .admin-grid {
                 display: grid;

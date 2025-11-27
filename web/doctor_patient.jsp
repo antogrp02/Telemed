@@ -33,6 +33,7 @@
     <head>
         <title>Heart Monitor - Scheda Paziente</title>
         <link rel="stylesheet" href="../css/style.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
