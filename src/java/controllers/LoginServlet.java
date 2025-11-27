@@ -50,7 +50,7 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("force_username", c.username);
                 session.setAttribute("force_role", c.role);  // ci servirà per il redirect finale
 
-                resp.sendRedirect(req.getContextPath() + "/change_password.jsp");
+                req.getRequestDispatcher("/WEB-INF/change_password.jsp").forward(req, resp);
                 return;
             }
 
