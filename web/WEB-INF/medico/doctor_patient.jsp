@@ -32,7 +32,7 @@
 <html>
     <head>
         <title>Heart Monitor - Scheda Paziente</title>
-        <link rel="stylesheet" href="../css/style.css">
+        <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -183,16 +183,16 @@
             <div class="logo">Heart Monitor</div>
             <div class="subtitle">Scheda paziente</div>
             <div class="spacer"></div>
-            <a href="../logout" class="toplink">Logout</a>
+            <a href="<%= request.getContextPath() %>/logout" class="toplink">Logout</a>
         </div>
 
         <div class="layout">
 
             <!-- SIDEBAR -->
             <div class="sidebar">
-                <a href="dashboard">Pazienti</a>
-                <a href="appointments">Appuntamenti</a>
-                <a href="alerts">Alert</a>
+                <a href="<%= request.getContextPath() %>/doctor/dashboard">Pazienti</a>
+                <a href="<%= request.getContextPath() %>/doctor/appointments">Appuntamenti</a>
+                <a href="<%= request.getContextPath() %>/doctor/alerts">Alert</a>
             </div>
 
             <!-- MAIN -->
@@ -216,7 +216,7 @@
                             </div>
 
                             <!-- 🔵 PULSANTE CHAT -->
-                            <a href="chat?id=<%= paz != null ? paz.getIdPaz() : 0%>"
+                            <a href="<%= request.getContextPath() %>/doctor/chat?id=<%= paz != null ? paz.getIdPaz() : 0%>"
                                style="
                                margin-top:6px;
                                display:inline-block;

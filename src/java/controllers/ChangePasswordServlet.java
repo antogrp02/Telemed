@@ -20,7 +20,7 @@ public class ChangePasswordServlet extends HttpServlet {
 
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute("force_username") == null) {
-            resp.sendRedirect(req.getContextPath() + "<%= request.getContextPath() %>/login");
+            resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
 
@@ -33,7 +33,7 @@ public class ChangePasswordServlet extends HttpServlet {
         // 1) Controllo password coincidono
         if (!newPass.equals(conf)) {
             req.setAttribute("err", "Le password non coincidono.");
-            req.getRequestDispatcher("<%= request.getContextPath() %>/change_password.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/change_password.jsp").forward(req, resp);
             return;
         }
 
@@ -52,20 +52,20 @@ public class ChangePasswordServlet extends HttpServlet {
 
         } catch (Exception e) {
             req.setAttribute("err", "Errore nel recupero della password attuale.");
-            req.getRequestDispatcher("<%= request.getContextPath() %>/change_password.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/change_password.jsp").forward(req, resp);
             return;
         }
 
         if (oldPassword == null) {
             req.setAttribute("err", "Utente non trovato.");
-            req.getRequestDispatcher("<%= request.getContextPath() %>/change_password.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/change_password.jsp").forward(req, resp);
             return;
         }
 
         // 3) Controllo: nuova password NON deve essere uguale alla vecchia
         if (newPass.equals(oldPassword)) {
             req.setAttribute("err", "La nuova password deve essere diversa da quella attuale.");
-            req.getRequestDispatcher("<%= request.getContextPath() %>/change_password.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/change_password.jsp").forward(req, resp);
             return;
         }
 
@@ -74,7 +74,7 @@ public class ChangePasswordServlet extends HttpServlet {
             CredenzialiDAO.updatePasswordAndDisableFlag(username, newPass);
         } catch (Exception e) {
             req.setAttribute("err", "Errore durante l'aggiornamento della password.");
-            req.getRequestDispatcher("<%= request.getContextPath() %>/change_password.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/change_password.jsp").forward(req, resp);
             return;
         }
 
@@ -84,11 +84,11 @@ public class ChangePasswordServlet extends HttpServlet {
 
         // 6) Redirect corretto in base al ruolo
         if (role == 0) {
-            resp.sendRedirect(req.getContextPath() + "<%= request.getContextPath() %>/patient/dashboard");
+            resp.sendRedirect(req.getContextPath() + "/patient/dashboard");
         } else if (role == 1) {
-            resp.sendRedirect(req.getContextPath() + "<%= request.getContextPath() %>/doctor/dashboard");
+            resp.sendRedirect(req.getContextPath() + "/doctor/dashboard");
         } else {
-            resp.sendRedirect(req.getContextPath() + "<%= request.getContextPath() %>/admin/users");
+            resp.sendRedirect(req.getContextPath() + "/admin/users");
         }
     }
 }

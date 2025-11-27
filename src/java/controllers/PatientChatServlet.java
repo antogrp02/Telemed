@@ -58,7 +58,7 @@ public class PatientChatServlet extends BaseChatServlet {
                     med.getIdUtente(), // otherUserId
                     paz,
                     med,
-                    "/patient_chat.jsp",
+                    "/WEB-INF/paziente/patient_chat.jsp",
                     false // il paziente NON marca i messaggi come letti
             );
 

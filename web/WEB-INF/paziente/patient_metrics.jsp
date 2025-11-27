@@ -127,10 +127,10 @@
         <div class="layout">
 
             <div class="sidebar">
-                <a href="<%= request.getContextPath() %>/dashboard">Dashboard</a>
-                <a href="<%= request.getContextPath() %>/questionnaire">Questionario</a>
-                <a class="active" href="<%= request.getContextPath() %>/metrics">Storico Parametri</a>
-                <a href="<%= request.getContextPath() %>/chat">Chat & Televisita</a>
+                <a href="<%= request.getContextPath() %>/patient/dashboard">Dashboard</a>
+                <a href="<%= request.getContextPath() %>/patient/questionnaire">Questionario</a>
+                <a class="active" href="<%= request.getContextPath() %>/patient/metrics">Storico Parametri</a>
+                <a href="<%= request.getContextPath() %>/patient/chat">Chat & Televisita</a>
             </div>
 
             <div class="main">

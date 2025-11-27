@@ -80,7 +80,7 @@ public class DoctorDashboardServlet extends HttpServlet {
             req.setAttribute("hasAlert", hasAlert);
             req.setAttribute("unreadByPaz", unreadByPaz);
 
-            req.getRequestDispatcher("/doctor_dashboard.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/medico/doctor_dashboard.jsp").forward(req, resp);
 
         } catch (Exception e) {
             throw new ServletException(e);

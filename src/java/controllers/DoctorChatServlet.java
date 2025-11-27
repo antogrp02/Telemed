@@ -66,7 +66,7 @@ public class DoctorChatServlet extends BaseChatServlet {
                 paz.getIdUtente(),   // otherUserId
                 paz,
                 med,
-                "/doctor_chat.jsp",
+                "/WEB-INF/medico/doctor_chat.jsp",
                 true                 // lato medico: segna come letti
         );
     }

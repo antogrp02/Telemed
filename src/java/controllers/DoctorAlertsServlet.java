@@ -42,7 +42,7 @@ public class DoctorAlertsServlet extends HttpServlet {
             req.setAttribute("alerts", alerts);
             req.setAttribute("pazienti", pazById);
             req.setAttribute("alerts", alerts);
-            req.getRequestDispatcher("/doctor_alerts.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/medico/doctor_alerts.jsp").forward(req, resp);
         } catch (Exception e) {
             throw new ServletException(e);
         }

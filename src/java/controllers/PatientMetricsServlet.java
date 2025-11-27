@@ -58,7 +58,7 @@ public class PatientMetricsServlet extends HttpServlet {
             req.setAttribute("jsonData", json);
             req.setAttribute("days", days);
 
-            req.getRequestDispatcher("/patient_metrics.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/paziente/patient_metrics.jsp").forward(req, resp);
 
         } catch (SQLException e) {
             throw new ServletException(e);

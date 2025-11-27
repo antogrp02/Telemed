@@ -50,7 +50,7 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("force_username", c.username);
                 session.setAttribute("force_role", c.role);  // ci servirà per il redirect finale
 
-                resp.sendRedirect(req.getContextPath() + "<%= request.getContextPath() %>/change_password.jsp");
+                resp.sendRedirect(req.getContextPath() + "/change_password.jsp");
                 return;
             }
 
@@ -77,7 +77,7 @@ public class LoginServlet extends HttpServlet {
                 }
                 session.setAttribute("id_paziente", p.getIdPaz());
                 session.setAttribute("id_medico", p.getIdMedico());
-                resp.sendRedirect("patient/dashboard");
+                resp.sendRedirect(req.getContextPath() + "/patient/dashboard");
                 return;
             }
 
@@ -89,12 +89,12 @@ public class LoginServlet extends HttpServlet {
                     return;
                 }
                 session.setAttribute("id_medico", m.getIdMedico());
-                resp.sendRedirect("doctor/dashboard");
+                resp.sendRedirect(req.getContextPath() + "/doctor/dashboard");
                 return;
             }
 
             // ADMIN (role == 2)
-            resp.sendRedirect("admin/users");
+            resp.sendRedirect(req.getContextPath() + "/admin/users");
 
         } catch (Exception e) {
             throw new ServletException(e);

@@ -42,7 +42,7 @@ public class QuestionnaireServlet extends HttpServlet {
             return;
         }
 
-        req.getRequestDispatcher("/questionnaire.jsp").forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/paziente/questionnaire.jsp").forward(req, resp);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class QuestionnaireServlet extends HttpServlet {
             // 🔒 1) Se già compilato oggi → torno alla PAGINA DEL QUESTIONARIO con messaggio
             if (QuestionariDAO.existsForDay(idPaz, today)) {
                 req.setAttribute("alreadyToday", true);
-                req.getRequestDispatcher("/questionnaire.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/paziente/questionnaire.jsp").forward(req, resp);
                 return;
             }
 

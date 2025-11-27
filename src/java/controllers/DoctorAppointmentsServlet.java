@@ -91,7 +91,7 @@ public class DoctorAppointmentsServlet extends HttpServlet {
             req.setAttribute("totalPages", totalPages);
             req.setAttribute("totalCount", totalCount);
 
-            req.getRequestDispatcher("/doctor_appointments.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/medico/doctor_appointments.jsp").forward(req, resp);
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Errore nel caricamento degli appuntamenti per il medico " + idMedico, e);

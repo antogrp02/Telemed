@@ -78,7 +78,7 @@ public class PatientDashboardServlet extends HttpServlet {
             req.setAttribute("storicoRisk", storicoRisk);
             req.setAttribute("mustCompleteQuestionnaire", mustCompleteQuestionnaire);
 
-            req.getRequestDispatcher("/patient_dashboard.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/paziente/patient_dashboard.jsp").forward(req, resp);
 
         } catch (Exception e) {
             throw new ServletException(e);

@@ -113,7 +113,7 @@ public class AdminUserServlet extends HttpServlet {
                 req.setAttribute("error", err);
             }
 
-            req.getRequestDispatcher("/admin_users.jsp").forward(req, resp);
+            req.getRequestDispatcher("/WEB-INF/admin/admin_users.jsp").forward(req, resp);
 
         } catch (Exception e) {
             throw new ServletException(e);
