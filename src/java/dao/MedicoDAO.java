@@ -182,30 +182,20 @@ public class MedicoDAO {
             return rs.next();
         }
     }
-    
-        public static Medico getByMail(String mail) throws Exception {
+
+    public static Medico getByMail(String mail) throws Exception {
         String sql = "SELECT * FROM medico WHERE mail = ?";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, mail);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) {
                     return null;
                 }
-
-                Medico m = new Medico();
-                m.setIdMedico(rs.getLong("id_medico"));
-                m.setIdUtente(rs.getLong("id_utente"));
-                m.setNome(rs.getString("nome"));
-                m.setCognome(rs.getString("cognome"));
-                m.setMail(rs.getString("mail"));
-                // altri campi se servono
-                return m;
+                return map(rs);   // ✅
             }
         }
     }
-
 
 }

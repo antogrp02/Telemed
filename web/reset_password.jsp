@@ -4,7 +4,7 @@
 <html>
 <head>
     <title>Heart Monitor - Reset password</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
 </head>
 <body class="bg-main">
 
@@ -16,7 +16,7 @@
     <div class="login-card">
         <h1>Imposta nuova password</h1>
 
-        <form method="post" action="password/reset">
+        <form method="post" action="<%= request.getContextPath() %>/password/reset">
             <input type="hidden" name="token" value="<%= token != null ? token : "" %>">
 
             <label for="password">Nuova password</label>
@@ -36,7 +36,7 @@
         </form>
 
         <p class="mt-2">
-            <a href="login.jsp">Torna al login</a>
+            <a href="<%= request.getContextPath() %>/login.jsp">Torna al login</a>
         </p>
     </div>
 </div>
