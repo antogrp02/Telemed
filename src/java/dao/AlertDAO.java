@@ -4,7 +4,10 @@
  */
 package dao;
 
+import model.Medico;
+import model.Paziente;
 import model.Alert;
+import utils.MailUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +57,47 @@ public class AlertDAO {
             ps.setString(4, a.getMessaggio());
 
             ps.executeUpdate();
+        }
+
+        try {
+            // Recupero paziente
+            Paziente p = PazienteDAO.getByIdPaziente(a.getIdPaz());
+            Long idMedico = p.getIdMedico();
+
+            if (idMedico == null || idMedico <= 0) {
+                return; // il paziente non ha medico → nessuna email
+            }
+
+            // Recupero medico
+            Medico m = MedicoDAO.getByIdMedico(idMedico);
+            if (m == null) {
+                return;
+            }
+
+            String emailMedico = m.getMail();
+            if (emailMedico == null || emailMedico.isBlank()) {
+                return; // medico senza email → esco
+            }
+
+            // Oggetto email
+            String subject = "⚠️ Nuovo Alert Clinico – Paziente "
+                    + p.getNome() + " " + p.getCognome();
+
+            // Corpo email
+            String body = "Gentile Dr. " + m.getNome() + ",\n\n"
+                    + "È stato generato un nuovo alert clinico per il paziente:\n\n"
+                    + "• Nome: " + p.getNome() + " " + p.getCognome() + "\n"
+                    + "• ID Paziente: " + p.getIdPaz() + "\n"
+                    + "• Descrizione: " + a.getMessaggio() + "\n"
+                    + "• Data/Ora: " + a.getRiskData() + "\n\n"
+                    + "Acceda al pannello medico per maggiori dettagli.\n\n"
+                    + "Cordiali saluti,\nHeart Monitor";
+
+            // INVIO EMAIL DAL MITTENTE "alert@heartmonitor.it"
+            MailUtil.sendAlertEmail(emailMedico, subject, body);
+
+        } catch (Exception e) {
+            e.printStackTrace(); // non manda in crash la web app
         }
     }
 

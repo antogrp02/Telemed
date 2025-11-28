@@ -409,7 +409,7 @@
 
                 <div class="hero-cta">
                     <% if (role == null) { %>
-                        <a href="<%= ctx %>/login.jsp" class="btn btn-primary btn-lg">Accedi</a>
+                        <a href="<%= ctx %>/login" class="btn btn-primary btn-lg">Accedi</a>
                     <% } else { %>
                         <a href="<%= dashUrl %>" class="btn btn-primary btn-lg">Vai alla Dashboard</a>
                     <% } %>

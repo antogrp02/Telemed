@@ -24,7 +24,7 @@ public class PatientChatServlet extends BaseChatServlet {
 
     @Override
     protected ChatContext buildChatContext(HttpServletRequest req, HttpServletResponse resp,
-                                           HttpSession session, long myUserId)
+            HttpSession session, long myUserId)
             throws ServletException {
 
         try {
@@ -44,13 +44,14 @@ public class PatientChatServlet extends BaseChatServlet {
             // Carico il medico
             Medico med = MedicoDAO.getByIdMedico(idMedico);
             if (med == null) {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+                req.setAttribute("err", "Non hai ancora un medico assegnato. La chat non è disponibile.");
+                req.getRequestDispatcher("/WEB-INF/paziente/no_doctor.jsp").forward(req, resp);
                 return null;
             }
 
             // Carico appuntamenti futuri
-            List<Appuntamento> appuntamenti =
-                    AppuntamentoDAO.getFuturiByMedicoAndPaziente(idMedico, idPaziente);
+            List<Appuntamento> appuntamenti
+                    = AppuntamentoDAO.getFuturiByMedicoAndPaziente(idMedico, idPaziente);
             req.setAttribute("appuntamenti", appuntamenti);
 
             // Ritorno il contesto

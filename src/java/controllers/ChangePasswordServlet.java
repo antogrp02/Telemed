@@ -30,6 +30,11 @@ public class ChangePasswordServlet extends HttpServlet {
         String newPass = req.getParameter("newpass");
         String conf = req.getParameter("conf");
 
+        if (newPass == null || newPass.isBlank()) {
+            req.setAttribute("err", "La password non può essere vuota.");
+            req.getRequestDispatcher("/WEB-INF/change_password.jsp").forward(req, resp);
+            return;
+        }
         // 1) Controllo password coincidono
         if (!newPass.equals(conf)) {
             req.setAttribute("err", "Le password non coincidono.");
@@ -40,9 +45,8 @@ public class ChangePasswordServlet extends HttpServlet {
         // 2) Recupera la password attuale dal DB
         String oldPassword = null;
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(
-                     "SELECT \"Password\" FROM credenziali WHERE \"Username\" = ?")) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(
+                "SELECT \"Password\" FROM credenziali WHERE \"Username\" = ?")) {
 
             ps.setString(1, username);
             ResultSet rs = ps.executeQuery();

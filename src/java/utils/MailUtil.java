@@ -16,7 +16,6 @@ public class MailUtil {
     // ==========================
     //   CONFIGURAZIONE SENDGRID
     // ==========================
-
     private static final String SMTP_HOST = "smtp.sendgrid.net";
     private static final String SMTP_PORT = "587";
 
@@ -29,8 +28,6 @@ public class MailUtil {
     private static final String SMTP_PASS = System.getenv("SENDGRID_API_KEY");
 
     private static final String FROM_ADDRESS = "noreply@heartmonitor.it";
-
-
 
     // ==========================
     //    COSTRUZIONE SESSIONE
@@ -72,8 +69,6 @@ public class MailUtil {
         return session;
     }
 
-
-
     // ==========================
     //      INVIO EMAIL
     // ==========================
@@ -92,15 +87,39 @@ public class MailUtil {
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
         message.setSubject("Reset password - Heart Monitor");
 
-        String text =
-                "Ciao,\n\n" +
-                "Hai richiesto la reimpostazione della password del tuo account Heart Monitor.\n\n" +
-                "➡ Per procedere clicca qui:\n" + resetLink + "\n\n" +
-                "Se non hai effettuato tu questa richiesta, ignora questa email.\n\n" +
-                "Heart Monitor";
+        String text
+                = "Ciao,\n\n"
+                + "Hai richiesto la reimpostazione della password del tuo account Heart Monitor.\n\n"
+                + "➡ Per procedere clicca qui:\n" + resetLink + "\n\n"
+                + "Se non hai effettuato tu questa richiesta, ignora questa email.\n\n"
+                + "Heart Monitor";
 
         message.setText(text);
 
         Transport.send(message);
     }
+
+    // ==========================
+//     INVIO EMAIL ALERT
+// ==========================
+    public static void sendAlertEmail(String to, String subject, String body)
+            throws MessagingException {
+
+        if (SMTP_PASS == null || SMTP_PASS.isEmpty()) {
+            System.out.println("❌ ERRORE: SENDGRID_API_KEY NON impostata!");
+            throw new MessagingException("API key SendGrid mancante");
+        }
+
+        Session session = getSession();
+
+        Message message = new MimeMessage(session);
+        message.setFrom(new InternetAddress("alert@heartmonitor.it"));  // mittente ALERT
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+        message.setSubject(subject);
+
+        message.setText(body);
+
+        Transport.send(message);
+    }
+
 }
