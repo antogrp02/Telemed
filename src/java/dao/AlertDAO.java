@@ -80,7 +80,7 @@ public class AlertDAO {
             }
 
             // Oggetto email
-            String subject = "⚠️ Nuovo Alert Clinico – Paziente "
+            String subject = "Nuovo Alert Clinico – Paziente "
                     + p.getNome() + " " + p.getCognome();
 
             // Corpo email

@@ -676,6 +676,27 @@
                 </div>
             </div>
         </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+
+                // 📌 Data massima = oggi
+                const today = new Date().toISOString().split("T")[0];
+
+                // seleziona tutti i campi data di nascita
+                const birthdateFields = [
+                    document.querySelector('input[name="data_n"]'), // nuovo paziente
+                    document.getElementById("data_n_edit_paz")           // modifica paziente
+                ];
+
+                birthdateFields.forEach(field => {
+                    if (field) {
+                        field.max = today;
+                    }
+                });
+
+                console.log("[AdminUsers] max date impostata a:", today);
+            });
+        </script>
 
     </body>
 </html>
