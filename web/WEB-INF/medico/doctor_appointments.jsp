@@ -10,10 +10,12 @@
 
 <%
     @SuppressWarnings(
+            
     
     "unchecked")
     List<Appuntamento> appuntamenti = (List<Appuntamento>) request.getAttribute("appuntamenti");
     @SuppressWarnings(
+            
     
     "unchecked")
     Map<Long, Paziente> pazById = (Map<Long, Paziente>) request.getAttribute("pazById");
@@ -514,29 +516,29 @@
 
         <!-- JAVASCRIPT -->
         <script>
-        console.log("[DoctorAppointments] Caricata pagina", <%= currentPage%>, "/", <%= totalPagesCount%>,
-                "| Appuntamenti totali =", <%= totalAppointments%>);
+            console.log("[DoctorAppointments] Caricata pagina", <%= currentPage%>, "/", <%= totalPagesCount%>,
+                    "| Appuntamenti totali =", <%= totalAppointments%>);
 
-        function onCancelSubmit(nome, cognome, data, ora) {
-            const msg = `Confermi l'annullamento dell'appuntamento di ${nome} ${cognome} del ${data} alle ${ora}?`;
-            const ok = window.confirm(msg);
-            if (ok)
-                console.log("[DoctorAppointments] Annullamento confermato");
-            return ok;
-        }
-
-        function onRescheduleSubmit(form, nome, cognome, oldData, oldOra) {
-            const newData = form.data.value;
-            const newOra = form.ora.value;
-
-            if (!newData || !newOra) {
-                alert("Seleziona la nuova data e ora per il rinvio.");
-                return false;
+            function onCancelSubmit(nome, cognome, data, ora) {
+                const msg = `Confermi l'annullamento dell'appuntamento di ${nome} ${cognome} del ${data} alle ${ora}?`;
+                const ok = window.confirm(msg);
+                if (ok)
+                    console.log("[DoctorAppointments] Annullamento confermato");
+                return ok;
             }
 
-            console.log(`[DoctorAppointments] Rinviato ${nome} ${cognome} da ${oldData} ${oldOra} a ${newData} ${newOra}`);
-            return true;
-        }
+            function onRescheduleSubmit(form, nome, cognome, oldData, oldOra) {
+                const newData = form.data.value;
+                const newOra = form.ora.value;
+
+                if (!newData || !newOra) {
+                    alert("Seleziona la nuova data e ora per il rinvio.");
+                    return false;
+                }
+
+                console.log(`[DoctorAppointments] Rinviato ${nome} ${cognome} da ${oldData} ${oldOra} a ${newData} ${newOra}`);
+                return true;
+            }
         </script>
 
         <script>
@@ -561,7 +563,10 @@
 
         <%@ include file="/WEB-INF/includes/video_window.jsp" %>
         <script src="<%= ctx%>/js/webrtc.js"></script>
-        <script> initTelevisit(MY_ID);</script>
+        <script>
+            const MY_ID = <%= session.getAttribute("id_utente")%>;
+            initTelevisit(MY_ID);
+        </script>
 
     </body>
 </html>

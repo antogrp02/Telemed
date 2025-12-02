@@ -11,6 +11,17 @@
     List<Paziente> pazienti = (List<Paziente>) request.getAttribute("pazienti");
     Map<Long, Risk> lastRiskByPaz = (Map<Long, Risk>) request.getAttribute("lastRiskByPaz");
     Map<Long, Integer> unreadByPaz = (Map<Long, Integer>) request.getAttribute("unreadByPaz");
+    Map<Long, Boolean> hasAlert = (Map<Long, Boolean>) request.getAttribute("hasAlert");
+
+    // PAGINAZIONE
+    Integer currentPage = (Integer) request.getAttribute("page");
+    Integer totalPages = (Integer) request.getAttribute("totalPages");
+    Integer totalCount = (Integer) request.getAttribute("totalCount");
+
+    if (currentPage == null) currentPage = 1;
+    if (totalPages == null) totalPages = 1;
+    if (totalCount == null) totalCount = 0;
+
     String ctx = request.getContextPath();
 
     int totalUnread = 0;
@@ -24,7 +35,7 @@
     <head>
         <title>Heart Monitor - Medico</title>
 
-        <link rel="stylesheet" href="<%= ctx%>/css/style.css">
+        <link rel="stylesheet" href="<%= ctx %>/css/style.css">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
         <style>
@@ -38,11 +49,7 @@
                 font-size: 20px;
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
-
-            #notifIcon:hover {
-                color: #ffffff;
-                transform: scale(1.1);
-            }
+            #notifIcon:hover { color: #ffffff; transform: scale(1.1); }
 
             .notifBadge {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -59,17 +66,13 @@
             }
 
             @keyframes pulse {
-                0%, 100% {
-                    transform: scale(1);
-                }
-                50% {
-                    transform: scale(1.05);
-                }
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.05); }
             }
 
             #notifBox {
                 position: fixed;
-                top: 80px; /* Altezza topbar + piccolo margine */
+                top: 80px;
                 right: 20px;
                 width: 320px;
                 background: #ffffff;
@@ -82,16 +85,9 @@
                 animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
 
-
             @keyframes slideDown {
-                from {
-                    opacity: 0;
-                    transform: translateY(-10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+                from { opacity: 0; transform: translateY(-10px); }
+                to   { opacity: 1; transform: translateY(0); }
             }
 
             .notif-header {
@@ -104,24 +100,6 @@
                 letter-spacing: 0.5px;
             }
 
-            .notif-item {
-                padding: 14px 20px;
-                cursor: pointer;
-                border-bottom: 1px solid #f1f5f9;
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                color: #334155;
-                font-size: 14px;
-            }
-
-            .notif-item:hover {
-                background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-                transform: translateX(4px);
-            }
-
-            .notif-item:last-child {
-                border-bottom: none;
-            }
-
             .notif-empty {
                 padding: 24px;
                 text-align: center;
@@ -130,42 +108,18 @@
                 font-weight: 500;
             }
 
-            /* --- DROPDOWN RICERCA --- */
-            #searchResults {
-                position: absolute;
-                top: 40px;
-                width: 100%;
-                background: #ffffff;
-                border: 1px solid #e2e8f0;
-                border-radius: 12px;
-                display: none;
-                z-index: 200;
-                box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
-                max-height: 280px;
-                overflow-y: auto;
-                animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .result-item {
-                padding: 12px 16px;
+            .notif-item {
+                padding: 14px 20px;
                 cursor: pointer;
-                font-size: 14px;
-                color: #334155;
                 border-bottom: 1px solid #f1f5f9;
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                font-weight: 500;
+                transition: 0.2s;
+                color: #334155;
+                font-size: 14px;
             }
-
-            .result-item:hover {
-                background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-                color: #0f172a;
+            .notif-item:hover {
+                background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);
                 transform: translateX(4px);
             }
-
-            .result-item:last-child {
-                border-bottom: none;
-            }
-
             /* --- BOTTONI --- */
             .btn-primary-sm {
                 padding: 8px 16px;
@@ -230,6 +184,51 @@
             .badge-none:hover {
                 transform: scale(1.05);
             }
+            /* ---- PAGINATION (from appointments style) ---- */
+            .pagination-bar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 2rem;
+                padding-top: 1rem;
+                border-top: 2px solid #e2e8f0;
+            }
+            .pagination-summary {
+                color: #718096;
+                font-size: 0.95rem;
+            }
+            .pagination-summary strong {
+                color: #667eea;
+                font-weight: 700;
+            }
+            .pagination-pages {
+                display: flex;
+                gap: 0.5rem;
+            }
+            .pagination-link {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                text-decoration: none;
+                color: #4a5568;
+                font-weight: 600;
+                transition: 0.3s;
+                border: 2px solid #e2e8f0;
+            }
+            .pagination-link:hover {
+                border-color: #667eea;
+                color: #667eea;
+                transform: translateY(-2px);
+            }
+            .pagination-link.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-color: transparent;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            }
 
         </style>
     </head>
@@ -243,16 +242,14 @@
 
             <div class="spacer"></div>
 
-            <!-- ICONA NOTIFICHE -->
             <div id="notifIcon">
-                💬
-                <span id="notifBadge" class="notifBadge"><%= totalUnread%></span>
+                💬 <span id="notifBadge" class="notifBadge"><%= totalUnread %></span>
             </div>
 
-            <a href="<%= ctx%>/logout" class="toplink">Logout</a>
+            <a href="<%= ctx %>/logout" class="toplink">Logout</a>
         </div>
 
-        <!-- BOX DROPDOWN NOTIFICHE -->
+        <!-- NOTIFICATION BOX -->
         <div id="notifBox">
             <div class="notif-header">Nuovi messaggi</div>
 
@@ -264,18 +261,17 @@
                         int unread = unreadByPaz != null ? unreadByPaz.getOrDefault(p.getIdPaz(), 0) : 0;
                         if (unread > 0) {
                 %>
-                <div class="notif-item"
-                     id="notif-item-<%= p.getIdPaz()%>"
-                     data-count="<%= unread%>"
-                     data-name="<%= p.getNome() + " " + p.getCognome()%>"
-                     onclick="location.href = '<%= ctx%>/doctor/chat?id=<%= p.getIdPaz()%>'">
 
-                    <%= p.getNome()%> <%= p.getCognome()%> — <%= unread%> messaggi
+                <div class="notif-item"
+                     id="notif-item-<%= p.getIdPaz() %>"
+                     data-count="<%= unread %>"
+                     data-name="<%= p.getNome() + " " + p.getCognome() %>"
+                     onclick="location.href='<%= ctx %>/doctor/chat?id=<%= p.getIdPaz() %>'">
+
+                    <%= p.getNome() %> <%= p.getCognome() %> — <%= unread %> messaggi
                 </div>
 
-                <% }
-                        }
-                    }%>
+                <% }}} %>
             </div>
         </div>
 
@@ -283,19 +279,17 @@
 
             <!-- SIDEBAR -->
             <div class="sidebar">
-                <a href="<%= ctx%>/doctor/dashboard" class="active">Pazienti</a>
-                <a href="<%= ctx%>/doctor/appointments">Appuntamenti</a>
-                <a href="<%= ctx%>/doctor/alerts">Alert</a>
+                <a href="<%= ctx %>/doctor/dashboard" class="active">Pazienti</a>
+                <a href="<%= ctx %>/doctor/appointments">Appuntamenti</a>
+                <a href="<%= ctx %>/doctor/alerts">Alert</a>
             </div>
 
-
-            <!-- CONTENUTO PRINCIPALE -->
+            <!-- MAIN -->
             <div class="main">
 
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
                     <h2>Pazienti in carico</h2>
 
-                    <!-- BARRA DI RICERCA -->
                     <div style="position:relative; width:260px;">
                         <input id="searchBox"
                                type="text"
@@ -305,7 +299,7 @@
                     </div>
                 </div>
 
-                <!-- TABELLA PAZIENTI -->
+                <!-- TABLE PAZIENTI -->
                 <table class="table">
                     <thead>
                         <tr>
@@ -318,68 +312,80 @@
                     </thead>
 
                     <tbody>
-                        <%
-                            if (pazienti != null && lastRiskByPaz != null) {
+                        <% if (pazienti != null && !pazienti.isEmpty()) {
 
-                                if (pazienti.isEmpty()) {
+                               for (Paziente p : pazienti) {
+
+                                   Risk r = lastRiskByPaz.get(p.getIdPaz());
+                                   float score = (r != null ? r.getRiskScore() : 0f);
+                                   String level = RiskEvaluator.getLevel(score);
+                                   String css = RiskEvaluator.getCssClass(score);
                         %>
+
+                        <tr>
+                            <td><%= p.getNome() %> <%= p.getCognome() %></td>
+
+                            <td><%= (r != null ? r.getData() : "N/D") %></td>
+
+                            <td>
+                                <span class="risk-badge <%= css %>">
+                                    <%= String.format("%.0f%%", score * 100) %> (<%= level %>)
+                                </span>
+                            </td>
+
+                            <td>
+                                <% boolean alertActive = hasAlert != null && hasAlert.getOrDefault(p.getIdPaz(), false); %>
+
+                                <% if (alertActive) { %>
+                                    <span class="badge-alert">Attivo</span>
+                                <% } else { %>
+                                    <span class="badge-none">Nessuno</span>
+                                <% } %>
+                            </td>
+
+                            <td style="text-align:right;">
+                                <form action="<%= ctx %>/doctor/patient" method="get" style="display:inline;">
+                                    <input type="hidden" name="id" value="<%= p.getIdPaz() %>">
+                                    <button type="submit" class="btn-primary-sm">Apri scheda</button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <% }} else { %>
+
                         <tr>
                             <td colspan="5" style="text-align:center; padding:20px; color:#64748b;">
                                 Nessun paziente associato.
                             </td>
                         </tr>
 
-                        <% }
-
-                            for (Paziente p : pazienti) {
-
-                                Risk r = lastRiskByPaz.get(p.getIdPaz());
-                                float score = (r != null ? r.getRiskScore() : 0f);
-
-                                String level = RiskEvaluator.getLevel(score);
-                                String css = RiskEvaluator.getCssClass(score);
-                        %>
-
-                        <tr>
-                            <td><%= p.getNome()%> <%= p.getCognome()%></td>
-                            <td><%= (r != null ? r.getData() : "N/D")%></td>
-
-                            <td>
-                                <span class="risk-badge <%= css%>">
-                                    <%= String.format("%.0f%%", score * 100)%> (<%= level%>)
-                                </span>
-                            </td>
-
-                            <td>
-                                <%
-                                    Map<Long, Boolean> hasAlert = (Map<Long, Boolean>) request.getAttribute("hasAlert");
-                                    boolean alertActive = hasAlert != null && hasAlert.getOrDefault(p.getIdPaz(), false);
-                                %>
-
-                                <% if (alertActive) { %>
-                                <span class="badge-alert">Attivo</span>
-                                <% } else { %>
-                                <span class="badge-none">Nessuno</span>
-                                <% }%>
-                            </td>
-
-                            <td style="text-align:right;">
-                                <form action="<%= ctx%>/doctor/patient" method="get" style="display:inline;">
-                                    <input type="hidden" name="id" value="<%= p.getIdPaz()%>">
-                                    <button type="submit" class="btn-primary-sm">Apri scheda</button>
-                                </form>
-                            </td>
-                        </tr>
-
-                        <% }
-                            }%>
+                        <% } %>
                     </tbody>
                 </table>
+
+                <!-- PAGINATION -->
+                <div class="pagination-bar">
+                    <div class="pagination-summary">
+                        Totale pazienti: <strong><%= totalCount %></strong> —
+                        Pagina <strong><%= currentPage %></strong> di <strong><%= totalPages %></strong>
+                    </div>
+
+                    <div class="pagination-pages">
+                        <% for (int p = 1; p <= totalPages; p++) {
+                               String active = (p == currentPage) ? " active" : "";
+                        %>
+                            <a class="pagination-link<%= active %>"
+                               href="<%= ctx %>/doctor/dashboard?page=<%= p %>">
+                                <%= p %>
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
 
             </div>
         </div>
 
-        <!-- SCRIPT NOTIFICHE -->
+        <!-- SCRIPTS -->
         <script>
             const notifIcon = document.getElementById("notifIcon");
             const notifBox = document.getElementById("notifBox");
@@ -395,11 +401,10 @@
             });
         </script>
 
-        <!-- SCRIPT RICERCA -->
         <script>
             const box = document.getElementById("searchBox");
             const resultsDiv = document.getElementById("searchResults");
-            const ctxPath = "<%= ctx%>";
+            const ctxPath = "<%= ctx %>";
 
             function highlight(text, q) {
                 const r = new RegExp("(" + q + ")", "gi");
@@ -408,10 +413,7 @@
 
             box.addEventListener("input", () => {
                 const q = box.value.trim();
-                if (!q) {
-                    resultsDiv.style.display = "none";
-                    return;
-                }
+                if (!q) { resultsDiv.style.display = "none"; return; }
 
                 fetch(ctxPath + "/doctor/search?q=" + encodeURIComponent(q))
                         .then(r => r.json())
@@ -423,11 +425,10 @@
                             }
 
                             resultsDiv.innerHTML = data.map(p =>
-                                '<div class="result-item" onclick="location.href=\'' + ctxPath +
-                                        '/doctor/patient?id=' + p.idPaz + '\'">' +
+                                '<div class="result-item" onclick="location.href=\'' + 
+                                        ctxPath + '/doctor/patient?id=' + p.idPaz + '\'">' +
                                         highlight(p.nome, q) + ' ' + highlight(p.cognome, q) +
-                                        ' <span style="color:#6b7280; font-size:12px;">(' + highlight(p.cf, q) +
-                                        ')</span></div>'
+                                        ' <span style="color:#6b7280; font-size:12px;">(' + highlight(p.cf, q) + ')</span></div>'
                             ).join("");
 
                             resultsDiv.style.display = "block";
@@ -435,39 +436,33 @@
             });
 
             document.addEventListener("click", e => {
-                if (!box.contains(e.target))
-                    resultsDiv.style.display = "none";
+                if (!box.contains(e.target)) resultsDiv.style.display = "none";
             });
         </script>
 
-        <!-- WEBSOCKET NOTIFICHE REALTIME -->
+        <!-- WEBSOCKET NOTIFICHE -->
         <script>
-            const MY_ID = <%= session.getAttribute("id_utente")%>;
+            const MY_ID = <%= session.getAttribute("id_utente") %>;
 
             const wsProto = location.protocol === "https:" ? "wss://" : "ws://";
-            const wsUrl = wsProto + location.host + "<%= ctx%>/ws/chat/" + MY_ID;
+            const wsUrl = wsProto + location.host + "<%= ctx %>/ws/chat/" + MY_ID;
 
             let ws = new WebSocket(wsUrl);
 
             ws.onmessage = (ev) => {
                 const msg = JSON.parse(ev.data);
 
-                // Solo messaggi ricevuti da pazienti reali
                 if (!msg.mine && msg.pazienteId > 0) {
 
                     const badge = document.getElementById("notifBadge");
                     const list = document.getElementById("notifList");
 
-                    // aggiorno badge
                     let num = parseInt(badge.textContent) || 0;
                     badge.textContent = num + 1;
 
-                    // rimuovo placeholder "nessun messaggio"
                     const empty = document.querySelector(".notif-empty");
-                    if (empty)
-                        empty.remove();
+                    if (empty) empty.remove();
 
-                    // controllo se il paziente ha già una riga
                     const existing = document.getElementById("notif-item-" + msg.pazienteId);
 
                     if (existing) {
@@ -479,19 +474,20 @@
                         existing.innerHTML = fullName + " — " + c + " messaggi";
 
                     } else {
-                        // creo nuova riga
                         const item = document.createElement("div");
                         item.className = "notif-item";
                         item.id = "notif-item-" + msg.pazienteId;
 
-                        const fullName = (msg.pazienteNome || "Paziente") + " " +
-                                (msg.pazienteCognome || "");
+                        const fullName = (msg.pazienteNome || "Paziente") +
+                                         " " +
+                                         (msg.pazienteCognome || "");
 
                         item.dataset.name = fullName;
                         item.dataset.count = 1;
                         item.innerHTML = fullName + " — 1 messaggio";
 
-                        item.onclick = () => location.href = "<%= ctx%>/doctor/chat?id=" + msg.pazienteId;
+                        item.onclick = () => location.href =
+                                "<%= ctx %>/doctor/chat?id=" + msg.pazienteId;
 
                         list.appendChild(item);
                     }
@@ -500,7 +496,7 @@
         </script>
 
         <%@ include file="/WEB-INF/includes/video_window.jsp" %>
-        <script src="<%= ctx%>/js/webrtc.js"></script>
+        <script src="<%= ctx %>/js/webrtc.js"></script>
         <script> initTelevisit(MY_ID);</script>
 
     </body>

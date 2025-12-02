@@ -16,9 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @WebServlet("/doctor/dashboard")
 public class DoctorDashboardServlet extends HttpServlet {
@@ -46,7 +44,34 @@ public class DoctorDashboardServlet extends HttpServlet {
 
         try {
             // 2) Pazienti associati al medico
-            List<Paziente> pazienti = PazienteDAO.getByIdMedico(idMedico);
+            List<Paziente> allPazienti = PazienteDAO.getByIdMedico(idMedico);
+
+            // ORDINA ALFABETICAMENTE
+            allPazienti.sort(
+                    Comparator.comparing(Paziente::getCognome, String.CASE_INSENSITIVE_ORDER)
+                            .thenComparing(Paziente::getNome, String.CASE_INSENSITIVE_ORDER)
+            );
+
+            // ----- PAGINAZIONE -----
+            int pageSize = 15;
+            int page = 1;
+
+            try {
+                page = Integer.parseInt(req.getParameter("page"));
+            } catch (Exception ignored) {}
+
+            int totalCount = allPazienti.size();
+            int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+            if (totalPages < 1) totalPages = 1;
+
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+
+            int start = (page - 1) * pageSize;
+            int end = Math.min(start + pageSize, totalCount);
+
+            List<Paziente> pazienti = allPazienti.subList(start, end);
+            // -------------------------
 
             // 3) Ultimo risk score per ogni paziente
             Map<Long, Risk> lastRiskByPaz = new HashMap<>();
@@ -55,18 +80,17 @@ public class DoctorDashboardServlet extends HttpServlet {
                 lastRiskByPaz.put(p.getIdPaz(), r);
             }
 
-            // 4) Alert attivi REALI (da tabella alert)
+            // 4) Alert attivi REALI
             Map<Long, Boolean> hasAlert = new HashMap<>();
             for (Paziente p : pazienti) {
                 boolean active = AlertDAO.hasActiveAlert(p.getIdPaz(), idMedico);
                 hasAlert.put(p.getIdPaz(), active);
             }
 
-            // 5) Messaggi non letti:
-            //    prima mappa (idUtentePaziente → numeroNonLetti) sulla base di id_utente medico
+            // 5) Messaggi non letti: mappa idUtentePaziente → numero non letti
             Map<Long, Integer> unreadByUser = ChatMessageDAO.getUnreadMessagesByPatient(idUtente);
 
-            //    poi converto a: idPaziente → numeroNonLetti
+            // converti a idPaziente → numero non letti
             Map<Long, Integer> unreadByPaz = new HashMap<>();
             for (Paziente p : pazienti) {
                 long userIdPaziente = p.getIdUtente();
@@ -74,11 +98,16 @@ public class DoctorDashboardServlet extends HttpServlet {
                 unreadByPaz.put(p.getIdPaz(), count);
             }
 
-            // 6) Passo tutto alla JSP
+            // ------ PASSA TUTTO ALLA JSP ------
             req.setAttribute("pazienti", pazienti);
             req.setAttribute("lastRiskByPaz", lastRiskByPaz);
             req.setAttribute("hasAlert", hasAlert);
             req.setAttribute("unreadByPaz", unreadByPaz);
+
+            // PAGINAZIONE
+            req.setAttribute("page", page);
+            req.setAttribute("totalPages", totalPages);
+            req.setAttribute("totalCount", totalCount);
 
             req.getRequestDispatcher("/WEB-INF/medico/doctor_dashboard.jsp").forward(req, resp);
 

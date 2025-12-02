@@ -68,7 +68,7 @@ public class PatientDashboardServlet extends HttpServlet {
             // vogliamo avvisare il paziente SOLO se:
             // - parametri di oggi presenti
             // - questionario di oggi NON presente
-            boolean mustCompleteQuestionnaire = hasParamsToday && !hasQuestionToday;
+            boolean mustCompleteQuestionnaire = !hasQuestionToday;
 
             // ==========================
             // 3) Metto tutto in request
