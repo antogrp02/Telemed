@@ -104,14 +104,17 @@ public class VideoSignalEndpoint {
             // ============================================================
             if (message.contains("\"candidate\"")) {
                 Session dest = SESSIONS.get(toId);
-                
-                // Se il destinatario è OFFLINE oppure ha un'offerta pendente (sta ricaricando)
-                // Salviamo i candidati invece di perderli
-                if (dest == null || !dest.isOpen() || pendingOffers.containsKey(toId)) {
-                    pendingCandidates.computeIfAbsent(toId, k -> new CopyOnWriteArrayList<>()).add(enrichedMessage);
-                    return; // Non proviamo a inviarlo ora, lo invierà onOpen
+
+                // Se il destinatario è OFFLINE, bufferizza i candidati
+                // altrimenti inoltrali subito (è quello che ora ti manca)
+                if (dest == null || !dest.isOpen()) {
+                    pendingCandidates
+                            .computeIfAbsent(toId, k -> new CopyOnWriteArrayList<>())
+                            .add(enrichedMessage);
+                    return; // li invieremo al prossimo onOpen
                 }
             }
+
 
             // ============================================================
             // 3. PULIZIA (ANSWER / HANGUP)
