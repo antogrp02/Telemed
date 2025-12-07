@@ -66,7 +66,7 @@
                         <b>Questionario non completato</b><br>
                         Per ottenere la valutazione di rischio di oggi devi compilare il questionario dei sintomi.
                     </div>
-                    <a href="<%= request.getContextPath() %>/questionnaire" class="alert-btn">Compila ora</a>
+                    <a href="<%= request.getContextPath() %>/patient/questionnaire" class="alert-btn">Compila ora</a>
                 </div>
 
                 <script>

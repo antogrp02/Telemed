@@ -25,25 +25,23 @@ let incomingCallerId = null;
 let pendingOffer = null;
 let inCall = false;
 
+// --- NOVITÀ: Coda per i pacchetti arrivati troppo presto ---
+let iceCandidatesQueue = []; 
+
 const rtcConfig = {
-iceServers: [
+  iceServers: [
     {
-      urls: [
-        "turn:84.8.248.180:3478?transport=udp",
-        "turn:84.8.248.180:3478?transport=tcp"
-      ],
-      username: "admin",
-      credential: "passwordsegreta"
+    
     }
   ]
 };
 
-// Crea la connessione usando questa config
-const myPeerConnection = new RTCPeerConnection(rtcConfig);
+// =====================================================
+//                INIZIALIZZAZIONE
+// =====================================================
 
-// =====================================================
-//               INIZIALIZZAZIONE
-// =====================================================
+// --- AGGIUNGI QUESTA VARIABILE GLOBALE ---
+let heartbeatInterval = null; 
 
 window.initTelevisit = function(myId) {
     localUserId = myId;
@@ -56,7 +54,7 @@ window.initTelevisit = function(myId) {
         return;
     }
 
-    // Costruzione URL WebSocket (fix doppio slash)
+    // Costruzione URL WebSocket
     const proto = location.protocol === "https:" ? "wss://" : "ws://";
     const seg = location.pathname.split("/").filter(s => s);
     const base = seg.length > 0 ? `/${seg[0]}` : "";
@@ -64,15 +62,45 @@ window.initTelevisit = function(myId) {
 
     rtcSocket = new WebSocket(wsUrl);
 
+    // ==========================================================
+    // 1. ON OPEN: AVVIA IL HEARTBEAT (PING)
+    // ==========================================================
     rtcSocket.onopen = () => {
         console.log("WebSocket WebRTC connesso:", wsUrl);
+        
+        // Pulisci eventuali vecchi intervalli
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+
+        // Invia un pacchetto vuoto ogni 30 secondi per tenere vivo il tunnel
+        heartbeatInterval = setInterval(() => {
+            if (rtcSocket.readyState === WebSocket.OPEN) {
+                // Inviamo un JSON valido così il server Java non si lamenta
+                rtcSocket.send(JSON.stringify({ type: "ping", from: localUserId }));
+                console.log("Ping inviato (Keep-Alive)");
+            }
+        }, 30000); // 30 secondi
     };
 
     rtcSocket.onerror = (e) => console.error("Errore WebSocket WebRTC:", e);
 
+    // ==========================================================
+    // 2. ON CLOSE: RIAVVIA LA CONNESSIONE (AUTO-RECONNECT)
+    // ==========================================================
     rtcSocket.onclose = () => {
-        console.warn("WebSocket chiuso.");
-        if (inCall) endCallUI();
+        console.warn("WebSocket chiuso. Tentativo di riconnessione in 3 secondi...");
+        
+        // Ferma il heartbeat per non sprecare risorse
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+
+        if (inCall) {
+            endCallUI(); // Se eri in chiamata, purtroppo cade
+        }
+
+        // Riprova a connetterti tra 3 secondi
+        setTimeout(() => {
+            console.log("Riconnessione in corso...");
+            window.initTelevisit(localUserId);
+        }, 3000);
     };
 
     rtcSocket.onmessage = async (msg) => {
@@ -83,15 +111,15 @@ window.initTelevisit = function(myId) {
             return;
         }
 
+        // Ignora i tuoi stessi messaggi (se il server fa echo)
+        if (data.from === localUserId) return;
+
         // BLOCCO: filtra messaggi da terzi se sei già in chiamata
         if (inCall && data.from && data.from !== remoteUserId) {
             console.warn(`Messaggio ignorato da ${data.from}, sei in call con ${remoteUserId}`);
-
-            // Se l'altro tenta di chiamarti → manda busy
             if (data.type === "offer-init" || data.type === "offer") {
                 _send({ type: "busy", to: data.from });
             }
-
             return;
         }
 
@@ -116,9 +144,17 @@ window.initTelevisit = function(myId) {
                 break;
 
             case "candidate":
-                if (pc && data.candidate) {
-                    try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); }
-                    catch (e) { console.error("ICE error:", e); }
+                if (data.candidate) {
+                    const candidate = new RTCIceCandidate(data.candidate);
+                    
+                    // GESTIONE CODA (Già corretta prima)
+                    if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) {
+                        console.log("Candidato ICE arrivato in anticipo -> Messo in coda.");
+                        iceCandidatesQueue.push(candidate);
+                    } else {
+                        try { await pc.addIceCandidate(candidate); }
+                        catch (e) { console.error("ICE error immediato:", e); }
+                    }
                 }
                 break;
 
@@ -131,12 +167,14 @@ window.initTelevisit = function(myId) {
                 alert(`L'utente ${data.from} è occupato.`);
                 endCallUI();
                 break;
+                
+            // Il server Java ignorerà il tipo "ping", quindi non serve un case qui
         }
     };
 };
 
 // =====================================================
-//                 CHIAMATA USCENTE
+//                  CHIAMATA USCENTE
 // =====================================================
 
 window.startOutgoingCall = async function(receiverId) {
@@ -172,7 +210,7 @@ window.startOutgoingCall = async function(receiverId) {
 };
 
 // =====================================================
-//         OFFER IN ENTRATA (solo ricevente)
+//          OFFER IN ENTRATA (solo ricevente)
 // =====================================================
 
 async function onIncomingOffer(data) {
@@ -218,6 +256,22 @@ window.rejectIncomingCall = function() {
 //                 HANDLE OFFER / ANSWER
 // =====================================================
 
+// --- FUNZIONE HELPER PER SVUOTARE LA CODA ---
+async function processIceQueue() {
+    if (iceCandidatesQueue.length > 0) {
+        console.log(`Applicazione di ${iceCandidatesQueue.length} candidati dalla coda...`);
+        for (const candidate of iceCandidatesQueue) {
+            try {
+                await pc.addIceCandidate(candidate);
+            } catch (e) {
+                console.error("Errore candidati in coda:", e);
+            }
+        }
+        iceCandidatesQueue = []; // Svuota
+    }
+}
+// --------------------------------------------
+
 async function handleOffer(data) {
     if (!remoteUserId) remoteUserId = data.from;
 
@@ -225,6 +279,11 @@ async function handleOffer(data) {
 
     try {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        
+        // --- ORA CHE ABBIAMO SETTATO LA REMOTE DESC, PROCESSIA LA CODA ---
+        await processIceQueue();
+        // -----------------------------------------------------------------
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
@@ -239,13 +298,18 @@ async function handleAnswer(data) {
     if (!pc) return;
     try {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        
+        // --- ORA CHE ABBIAMO SETTATO LA REMOTE DESC, PROCESSIA LA CODA ---
+        await processIceQueue();
+        // -----------------------------------------------------------------
+
     } catch (e) {
         console.error("Errore handleAnswer:", e);
     }
 }
 
 // =====================================================
-//        CREAZIONE + CONFIGURAZIONE PEER CONNECTION
+//         CREAZIONE + CONFIGURAZIONE PEER CONNECTION
 // =====================================================
 
 async function setupPeerConnection() {
@@ -301,7 +365,7 @@ async function setupPeerConnection() {
 }
 
 // =====================================================
-//                 UI: FINESTRA VIDEO
+//                  UI: FINESTRA VIDEO
 // =====================================================
 
 function showVideoWindow() {
@@ -324,6 +388,9 @@ function endCallUI() {
     incomingCallerId = null;
     pendingOffer = null;
     remoteUserId = null;
+    
+    // Pulizia coda candidati
+    iceCandidatesQueue = [];
 
     if (pc) pc.close();
     pc = null;
