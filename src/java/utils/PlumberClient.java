@@ -13,7 +13,31 @@ public class PlumberClient {
 
     private static final String PLUMBER_URL = "http://localhost:8000/predict";
 
+    // ============================================================
+    //  RISULTATO COMPLETO ML (risk + explanation SHAP)
+    // ============================================================
+    public static class MlResult {
+        private final float riskScore;
+        private final String explanation;
+
+        public MlResult(float riskScore, String explanation) {
+            this.riskScore = riskScore;
+            this.explanation = explanation;
+        }
+
+        public float getRiskScore() {
+            return riskScore;
+        }
+
+        public String getExplanation() {
+            return explanation;
+        }
+    }
+
     /**
+     * ============================================================
+     *  METODO ORIGINALE — NON TOCCATO
+     * ============================================================
      * Esegue la predizione chiamando Plumber (R)
      */
     public static float getRiskScore(Parametri p, Questionario q) throws IOException {
@@ -106,5 +130,97 @@ public class PlumberClient {
         }
 
         return obj.get("risk").getAsFloat();
+    }
+
+    /**
+     * ============================================================
+     *  NUOVO METODO — SHAP / EXPLANATION
+     * ============================================================
+     * NON influisce su getRiskScore()
+     */
+    public static MlResult getRiskWithExplanation(Parametri p, Questionario q) throws IOException {
+
+        if (q == null) {
+            throw new IllegalArgumentException("Questionario nullo: impossibile chiamare il modello ML");
+        }
+
+        // ---- JSON identico al metodo originale ----
+        JsonObject root = new JsonObject();
+
+        root.addProperty("heart_rate_curr", p.getHrCurr());
+        root.addProperty("hrv_rmssd_curr", p.getHrvRmssdCurr());
+        root.addProperty("spo2_curr", p.getSpo2Curr());
+        root.addProperty("resp_rate_curr", p.getRespRateCurr());
+        root.addProperty("thoracic_bioimpedance_curr", p.getBioimpCurr());
+        root.addProperty("weight_curr", p.getWeightCurr());
+        root.addProperty("steps_curr", p.getStepsCurr());
+        root.addProperty("resting_hr_curr", p.getRhrCurr());
+
+        root.addProperty("Q1_dyspnea", String.valueOf(q.getDispnea()));
+        root.addProperty("Q2_edema", String.valueOf(q.getEdema()));
+        root.addProperty("Q3_fatigue", String.valueOf(q.getFatica()));
+        root.addProperty("Q4_adl_lim", String.valueOf(q.getAdl()));
+        root.addProperty("Q5_orthopnea", String.valueOf(q.getOrtopnea()));
+        root.addProperty("Q6_dizziness", String.valueOf(q.getVertigini()));
+
+        root.addProperty("heart_rate_tr7", p.getHr7d());
+        root.addProperty("hrv_rmssd_tr7", p.getHrvRmssd7d());
+        root.addProperty("spo2_tr7", p.getSpo27d());
+        root.addProperty("resp_rate_tr7", p.getRespRate7d());
+        root.addProperty("thoracic_bioimpedance_tr7", p.getBioimp7d());
+        root.addProperty("weight_tr7", p.getWeight7d());
+        root.addProperty("steps_tr7", p.getSteps7d());
+        root.addProperty("resting_hr_tr7", p.getRhr7d());
+
+        root.addProperty("heart_rate_zb", p.getHrBs());
+        root.addProperty("hrv_rmssd_zb", p.getHrvRmssdBs());
+        root.addProperty("spo2_zb", p.getSpo2Bs());
+        root.addProperty("resp_rate_zb", p.getRespRateBs());
+        root.addProperty("thoracic_bioimpedance_zb", p.getBioimpBs());
+        root.addProperty("weight_zb", p.getWeightBs());
+        root.addProperty("steps_zb", p.getStepsBs());
+        root.addProperty("resting_hr_zb", p.getRhrBs());
+
+        String json = root.toString();
+
+        URL url = new URL(PLUMBER_URL);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setConnectTimeout(5000);
+        conn.setReadTimeout(5000);
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setDoOutput(true);
+
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(json.getBytes());
+        }
+
+        int code = conn.getResponseCode();
+        if (code != 200) {
+            throw new IOException("Plumber HTTP error: " + code);
+        }
+
+        StringBuilder resp = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                resp.append(line);
+            }
+        }
+
+        JsonObject obj = JsonParser.parseString(resp.toString()).getAsJsonObject();
+
+        if (!obj.has("risk")) {
+            throw new IOException("Risposta ML priva di campo 'risk'");
+        }
+
+        float risk = obj.get("risk").getAsFloat();
+
+        String explanation = null;
+        if (obj.has("explanation") && !obj.get("explanation").isJsonNull()) {
+            explanation = obj.get("explanation").getAsString();
+        }
+
+        return new MlResult(risk, explanation);
     }
 }

@@ -94,16 +94,12 @@ public class InsertParametersServlet extends HttpServlet {
             // 4) Recupero Questionario del giorno
             // ------------------------
             if (!QuestionariDAO.existsForDay(idPaz, today)) {
-                // per sicurezza: flag e tabella questionari non coerenti
                 resp.getWriter().write("{\"status\":\"pending_questionnaire\"}");
                 return;
             }
 
-            // prendo l’ultimo questionario: dato il check sopra,
-            // l’ultimo è quello di oggi
             Questionario q = QuestionariDAO.getLastByPaziente(idPaz);
             if (q == null || !q.getData().toLocalDate().equals(today)) {
-                // caso anomalo, gestisco come mancanza questionario
                 resp.getWriter().write("{\"status\":\"pending_questionnaire\"}");
                 return;
             }
@@ -111,7 +107,11 @@ public class InsertParametersServlet extends HttpServlet {
             // ------------------------
             // 5) CHIAMATA AL MODELLO ML (Plumber)
             // ------------------------
-            float riskScore = PlumberClient.getRiskScore(p, q);
+            PlumberClient.MlResult mlResult =
+                    PlumberClient.getRiskWithExplanation(p, q);
+
+            float riskScore = mlResult.getRiskScore();
+            String explanation = mlResult.getExplanation();
 
             // ------------------------
             // 6) Salvo rischio
@@ -134,7 +134,13 @@ public class InsertParametersServlet extends HttpServlet {
                     a.setIdPaz(idPaz);
                     a.setRiskData(r.getData());
                     a.setIdMedico(paz.getIdMedico());
-                    a.setMessaggio("Rischio elevato: " + Math.round(riskScore * 100) + "%");
+
+                    String msg = "Rischio elevato: " + Math.round(riskScore * 100) + "%";
+                    if (explanation != null && !explanation.isBlank()) {
+                        msg += " — " + explanation;
+                    }
+
+                    a.setMessaggio(msg);
                     AlertDAO.insert(a);
                 }
             }

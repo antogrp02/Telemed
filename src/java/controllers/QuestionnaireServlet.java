@@ -90,7 +90,14 @@ public class QuestionnaireServlet extends HttpServlet {
                     Parametri p = ParametriDAO.getLastByPatient(idPaz);
                     if (p != null) {
 
-                        float riskScore = PlumberClient.getRiskScore(p,q);
+                        // ===============================
+                        // CHIAMATA ML (con explanation)
+                        // ===============================
+                        PlumberClient.MlResult mlResult =
+                                PlumberClient.getRiskWithExplanation(p, q);
+
+                        float riskScore = mlResult.getRiskScore();
+                        String explanation = mlResult.getExplanation();
 
                         Risk r = new Risk();
                         r.setIdPaz(idPaz);
@@ -107,7 +114,13 @@ public class QuestionnaireServlet extends HttpServlet {
                                 a.setIdPaz(idPaz);
                                 a.setRiskData(r.getData());
                                 a.setIdMedico(paz.getIdMedico());
-                                a.setMessaggio("Rischio elevato: " + Math.round(riskScore * 100) + "%");
+
+                                String msg = "Rischio elevato: " + Math.round(riskScore * 100) + "%";
+                                if (explanation != null && !explanation.isBlank()) {
+                                    msg += " — " + explanation;
+                                }
+
+                                a.setMessaggio(msg);
                                 AlertDAO.insert(a);
                             }
                         }
@@ -117,6 +130,7 @@ public class QuestionnaireServlet extends HttpServlet {
                 ex.printStackTrace();
                 // non blocchiamo il flusso del paziente per l'errore ML
             }
+
             // ✅ Dopo salvataggio → vai in dashboard con flag di successo
             HttpSession session = req.getSession();
             session.setAttribute("questionnaire_ok", true);
